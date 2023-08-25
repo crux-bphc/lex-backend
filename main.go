@@ -28,18 +28,27 @@ func main() {
 	// Direct link to the m3u8 file with the uri of the decryption key for the AES-128 cipher replaced by the server implementation
 	r.GET("/impartus/video", func(ctx *gin.Context) {
 		inm3u8 := ctx.Query("inm3u8")
-		// token := ctx.Query("token")
+
+		// Any auth token works, even if the user is not registered to the course
+		token := ctx.Query("token")
 
 		scheme := "http"
 		if ctx.Request.TLS != nil {
 			scheme = "https"
 		}
-		data, err := functions.GetM3U8(inm3u8, fmt.Sprintf("%s://%s/key", scheme, ctx.Request.Host))
+		replacement := fmt.Sprintf("%s://%s/impartus/key/$1?token=%s", scheme, ctx.Request.Host, token)
+		data, err := functions.GetM3U8(inm3u8, replacement)
 		if err != nil {
 			log.Println(err)
 		}
 
 		ctx.Data(200, "application/x-mpegurl", data)
+	})
+
+	// Gets a video stream based on the internet connection and bandwidth of the user.
+	// TODO
+	r.GET("/impartus/lecture", func(ctx *gin.Context) {
+		ctx.JSON(200, "TODO")
 	})
 
 	r.Run(":3000")
