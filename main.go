@@ -46,9 +46,21 @@ func main() {
 	})
 
 	// Gets a video stream based on the internet connection and bandwidth of the user.
-	// TODO
-	r.GET("/impartus/lecture", func(ctx *gin.Context) {
-		ctx.JSON(200, "TODO")
+	r.GET("/impartus/lecture/:ttid", func(ctx *gin.Context) {
+		ttid := ctx.Param("ttid")
+		token := ctx.Query("token")
+
+		scheme := "http"
+		if ctx.Request.TLS != nil {
+			scheme = "https"
+		}
+		baseUrl := fmt.Sprintf("%s://%s", scheme, ctx.Request.Host)
+		data, err := functions.GetLecture(ttid, token, baseUrl)
+		if err != nil {
+			log.Println(err)
+		}
+
+		ctx.Data(200, "application/x-mpegurl", data)
 	})
 
 	r.Run(":3000")
