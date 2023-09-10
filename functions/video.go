@@ -14,13 +14,7 @@ var keyUriRegex = regexp.MustCompile("#EXT-X-KEY:METHOD=AES-128,URI=\".*ttid=(\\
 // Gets the bytes of the m3u8 file with the decryption key replaced
 func GetM3U8(inm3u8 string, repl string) ([]byte, error) {
 	url := fmt.Sprintf("https://bitshyd.impartus.com/api/fetchvideo?tag=LC&inm3u8=%s", inm3u8)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}

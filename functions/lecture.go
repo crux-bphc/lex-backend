@@ -8,17 +8,13 @@ import (
 	"regexp"
 )
 
+// need to find a better regex for url
 var urlRegex = regexp.MustCompile("((http|https)://)(www.)?[a-zA-Z0-9@:%._\\+~#?&//=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%._\\+~#?&//=]*)")
 
 func GetLecture(ttid string, token string, baseUrl string) ([]byte, error) {
 	lectureUrl := fmt.Sprintf("https://bitshyd.impartus.com/api/fetchvideo?type=index.m3u8&ttid=%s&token=%s", ttid, token)
-	req, err := http.NewRequest(http.MethodGet, lectureUrl, nil)
-	if err != nil {
-		return nil, err
-	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.Get(lectureUrl)
 	if err != nil {
 		return nil, err
 	}
