@@ -1,16 +1,22 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/crux-bphc/lex/functions"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
 	r := gin.Default()
-	r.SetTrustedProxies(nil)
+	// r.SetTrustedProxies(nil)
+	r.Use(cors.Default())
 
 	// Returns the decryption key without the need for a Authorization header
 	r.GET("/impartus/key/:ttid", func(ctx *gin.Context) {
