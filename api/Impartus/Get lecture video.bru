@@ -1,0 +1,23 @@
+meta {
+  name: Get lecture video
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/impartus/lecture/{{ttid}}?token={{jwtToken}}
+  body: none
+  auth: none
+}
+
+query {
+  token: {{jwtToken}}
+}
+
+vars:pre-request {
+  ttid: 9414691
+}
+
+docs {
+  This video container file has seperate video containers with different resolutions that play under different bandwidth
+}

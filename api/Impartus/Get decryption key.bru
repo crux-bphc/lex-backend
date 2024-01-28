@@ -1,0 +1,19 @@
+meta {
+  name: Get decryption key
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/impartus/key/{{ttid}}?token={{impartusJwt}}
+  body: none
+  auth: none
+}
+
+query {
+  token: {{impartusJwt}}
+}
+
+vars:pre-request {
+  ttid: 9414681
+}
