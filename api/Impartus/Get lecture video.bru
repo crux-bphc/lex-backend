@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/impartus/lecture/{{ttid}}?token={{jwtToken}}
+  url: {{baseUrl}}/impartus/lecture/{{ttid}}/m3u8?token={{impartusJwt}}
   body: none
   auth: none
 }
 
 query {
-  token: {{jwtToken}}
+  token: {{impartusJwt}}
 }
 
 vars:pre-request {

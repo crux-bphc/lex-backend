@@ -1,4 +1,4 @@
-package functions
+package impartus
 
 import (
 	"fmt"
@@ -8,11 +8,12 @@ import (
 
 // Gets the decryption key for the AES-128 cipher used for encryption by impartus
 func GetDecryptionKey(ttid string, token string) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://bitshyd.impartus.com/api/fetchvideo/getVideoKey?ttid=%s&keyid=0", ttid), nil)
+	decryptionKeyEndpoint := fmt.Sprintf("%s/fetchvideo/getVideoKey?ttid=%s&keyid=0", baseImpartusUrl, ttid)
+	req, err := http.NewRequest(http.MethodGet, decryptionKeyEndpoint, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
