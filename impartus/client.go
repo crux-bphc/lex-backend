@@ -11,7 +11,14 @@ type ImpartusClient struct {
 }
 
 func (client *ImpartusClient) GetSubjects(token string) ([]byte, error) {
-	resp, err := http.Get(fmt.Sprintf("%s/subjects", client.baseUrl))
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/subjects", client.baseUrl), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
