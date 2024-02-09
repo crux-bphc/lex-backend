@@ -7,4 +7,17 @@ services:
       dockerfile: Containerfile
     ports:
       - 3000:3000
-    
+    depends_on:
+      - db
+  
+  db:
+    image: surrealdb/surrealdb:latest
+    entrypoint: 
+      - /surreal 
+      - start 
+      - --user
+      - $DB_USER
+      - --pass
+      - $DB_PASSWORD
+    ports:
+      - 8000:8000
