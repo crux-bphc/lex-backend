@@ -1,16 +1,16 @@
-package routes
+package internal
 
 import (
 	"fmt"
 	"log"
 	"regexp"
 
-	"github.com/crux-bphc/lex/impartus"
+	"github.com/crux-bphc/lex/cmd"
 	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterImpartus(router *gin.Engine) {
+func RegisterImpartusRoutes(router *gin.Engine) {
 	r := router.Group("/impartus")
 
 	// Returns the decryption key without the need for a Authorization header
@@ -18,8 +18,8 @@ func RegisterImpartus(router *gin.Engine) {
 		ttid := ctx.Param("ttid")
 		token := ctx.Query("token")
 
-		data, err := impartus.Client.GetDecryptionKey(token, ttid)
-		data = impartus.Client.NormalizeDecryptionKey(data)
+		data, err := cmd.ImpartusClient.GetDecryptionKey(token, ttid)
+		data = cmd.ImpartusClient.NormalizeDecryptionKey(data)
 		if err != nil {
 			log.Println(err)
 		}
@@ -36,7 +36,7 @@ func RegisterImpartus(router *gin.Engine) {
 
 		hostUrl := location.Get(ctx).String()
 
-		data, err := impartus.Client.GetIndexM3U8(token, ttid)
+		data, err := cmd.ImpartusClient.GetIndexM3U8(token, ttid)
 		if err != nil {
 			log.Println(err)
 		}
@@ -54,7 +54,7 @@ func RegisterImpartus(router *gin.Engine) {
 
 		hostUrl := location.Get(ctx).String()
 
-		data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
+		data, err := cmd.ImpartusClient.GetM3U8Chunk(token, m3u8)
 		if err != nil {
 			log.Println(err)
 		}

@@ -7,7 +7,9 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY *.go .
-COPY functions/ ./functions/
+COPY cmd/ ./cmd/
+COPY pkg/ ./pkg/
+COPY internal/ ./internal/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app
