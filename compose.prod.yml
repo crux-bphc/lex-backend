@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Containerfile
+    ports:
+      - 3000:3000
+    depends_on: ["db"]
+
+  db:
+    extends:
+      file: compose.base.yml
+      service: db

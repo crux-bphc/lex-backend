@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  db:
+    image: surrealdb/surrealdb:latest
+    entrypoint: 
+      - /surreal 
+      - start
+      - --auth
+      - --user
+      - $DB_USER
+      - --pass
+      - $DB_PASSWORD
+      - --allow-all
