@@ -12,3 +12,22 @@ services:
       - --pass
       - $DB_PASSWORD
       - --allow-all
+
+  migrate:
+    image: surrealdb/surrealdb:latest
+    entrypoint:
+      - /surreal 
+      - import 
+      - --endpoint 
+      - http://db:8000
+      - --user 
+      - $DB_USER 
+      - --pass 
+      - $DB_PASSWORD 
+      - --ns 
+      - $DB_NAMESPACE 
+      - --db 
+      - $DB_DATABASE 
+      - /extras/schema.surql
+    volumes:
+      - ./tools/schema.surql:/extras/schema.surql:ro
