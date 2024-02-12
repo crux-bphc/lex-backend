@@ -14,6 +14,9 @@ services:
       - --allow-all
     healthcheck:
       test: ["CMD", "/surreal", "isready"]
+      interval: 1min
+      start_interval: 4s
+      start_period: 10s
 
   migrate:
     image: surrealdb/surrealdb:latest
@@ -31,6 +34,9 @@ services:
       - --db 
       - $DB_DATABASE 
       - /extras/schema.surql
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
 
@@ -43,4 +49,3 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    command: ["python", "app.py"]
