@@ -14,7 +14,7 @@ services:
       - --allow-all
     healthcheck:
       test: ["CMD", "/surreal", "isready"]
-      interval: 1min
+      interval: 1m
       start_interval: 4s
       start_period: 10s
 
