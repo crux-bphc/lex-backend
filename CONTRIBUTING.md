@@ -8,6 +8,7 @@
 - Create a *.env* file following *.env.example* and populate the variables.
 - Run the containers for development using `docker compose -f compose.dev.yml up -d`.
 - Run `make migrate` to import the schema defined at *tools/schema.surql*.
+- Run the respective cron jobs using `make cron task={{file_name}}`
 - Run `go run .`
 - The server will start on [`http://localhost:3000`](http://localhost:3000)
 

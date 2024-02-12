@@ -12,6 +12,8 @@ services:
       - --pass
       - $DB_PASSWORD
       - --allow-all
+    healthcheck:
+      test: ["CMD", "/surreal", "isready"]
 
   migrate:
     image: surrealdb/surrealdb:latest
@@ -31,3 +33,14 @@ services:
       - /extras/schema.surql
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
+
+  cron:
+    build:
+      context: cron
+      dockerfile: Containerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    command: ["python", "app.py"]
