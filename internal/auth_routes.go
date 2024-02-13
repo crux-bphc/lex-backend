@@ -30,6 +30,9 @@ func RegisterAuthRoutes(router *gin.Engine) {
 	googleProvider := google.New(os.Getenv("GOOGLE_KEY"), os.Getenv("GOOGLE_SECRET"), os.Getenv("ORIGIN")+"/auth/callback/google", "email", "profile")
 	goth.UseProviders(googleProvider)
 
+	httpClient := &http.Client{}
+
+	// redirect to the Google OAuth provider
 	r.GET("/google", func(c *gin.Context) {
 		q := c.Request.URL.Query()
 		q.Add("provider", "google")
@@ -37,6 +40,7 @@ func RegisterAuthRoutes(router *gin.Engine) {
 		gothic.BeginAuthHandler(c.Writer, c.Request)
 	})
 
+	// callback from the Google OAuth provider
 	r.GET("/callback/google", func(c *gin.Context) {
 		q := c.Request.URL.Query()
 		q.Add("provider", "google")
@@ -55,6 +59,7 @@ func RegisterAuthRoutes(router *gin.Engine) {
 		c.Data(http.StatusOK, "application/json", []byte(jsonString))
 	})
 
+	// exchange a Google access token for a Keycloak access token
 	r.GET("/exchange", func(c *gin.Context) {
 		url_str := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", os.Getenv("KEYCLOAK_URL"), os.Getenv("KEYCLOAK_REALM"))
 
@@ -67,13 +72,12 @@ func RegisterAuthRoutes(router *gin.Engine) {
 		form_data.Set("subject_issuer", "google")
 
 		req, err := http.NewRequest(http.MethodPost, url_str, strings.NewReader(form_data.Encode()))
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-		httpClient := &http.Client{}
 		resp, err := httpClient.Do(req)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -89,4 +93,28 @@ func RegisterAuthRoutes(router *gin.Engine) {
 		c.Data(resp.StatusCode, "application/json", []byte(data))
 	})
 
+	// get user info from Keycloak
+	r.GET("/user", func(c *gin.Context) {
+		url_str := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/userinfo", os.Getenv("KEYCLOAK_URL"), os.Getenv("KEYCLOAK_REALM"))
+		req, err := http.NewRequest(http.MethodGet, url_str, nil)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Query("token")))
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.Data(resp.StatusCode, "application/json", []byte(data))
+	})
 }
