@@ -2,8 +2,12 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
@@ -50,4 +54,39 @@ func RegisterAuthRoutes(router *gin.Engine) {
 		jsonString := string(res)
 		c.Data(http.StatusOK, "application/json", []byte(jsonString))
 	})
+
+	r.GET("/exchange", func(c *gin.Context) {
+		url_str := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", os.Getenv("KEYCLOAK_URL"), os.Getenv("KEYCLOAK_REALM"))
+
+		form_data := url.Values{}
+		form_data.Set("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
+		form_data.Set("subject_token_type", "urn:ietf:params:oauth:token-type:access_token")
+		form_data.Set("client_id", os.Getenv("KEYCLOAK_CLIENT_ID"))
+		form_data.Set("client_secret", os.Getenv("KEYCLOAK_CLIENT_SECRET"))
+		form_data.Set("subject_token", c.Query("token"))
+		form_data.Set("subject_issuer", "google")
+
+		req, err := http.NewRequest(http.MethodPost, url_str, strings.NewReader(form_data.Encode()))
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		httpClient := &http.Client{}
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.Data(resp.StatusCode, "application/json", []byte(data))
+	})
+
 }
