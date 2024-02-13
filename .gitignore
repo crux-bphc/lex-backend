@@ -20,4 +20,7 @@
 # Go workspace file
 go.work
 
+# Temporary directory
+tmp
+
 .env
