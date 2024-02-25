@@ -2,13 +2,15 @@ version: '3'
 
 services:
   app:
-    build:
-      dockerfile: Containerfile.dev
-      context: .
+    image: cosmtrek/air
+    working_dir: /app
     ports:
       - "3000:3000"
     volumes:
       - ./:/app
+    depends_on:
+      db:
+        condition: service_healthy
       
   db:
     extends:

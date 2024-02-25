@@ -1,7 +1,6 @@
 # Setup
 
-- Install Go (project uses *1.21.0*)
-- Run `go get` to install dependencies
+- Make sure you have docker container runtime installed.
 
 # Running
 
