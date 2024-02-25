@@ -1,4 +1,4 @@
-package cmd
+package clients
 
 import pkg "github.com/crux-bphc/lex/pkg/impartus"
 
