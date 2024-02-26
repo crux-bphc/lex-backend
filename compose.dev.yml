@@ -11,7 +11,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      
+    env_file: .env
+
+  migrate:
+    extends:
+      file: compose.base.yml
+      service: migrate
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     extends:
       file: compose.base.yml
