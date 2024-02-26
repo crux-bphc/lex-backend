@@ -1,0 +1,16 @@
+FROM golang:1.22-bookworm
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the go mod and sum files
+COPY go.mod go.sum ./
+
+# Download all dependencies
+RUN go mod download && go mod verify
+
+# Copy the source from the current directory to the working directory inside the container
+COPY . .
+
+# Command to run the tests
+CMD ["go", "test", "-v", "./..."]

@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: ./test/Containerfile
+    volumes:
+      - ./:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file: .env.testing
+
+  migrate:
+    extends:
+      file: compose.base.yml
+      service: migrate
+    depends_on:
+      db:
+        condition: service_healthy
+  
+  db:
+    extends:
+      file: compose.base.yml
+      service: db
+    
