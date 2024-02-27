@@ -98,5 +98,3 @@ func (client *ImpartusClient) GetM3U8Chunk(token string, m3u8 string) ([]byte, e
 
 	return data, nil
 }
-
-// var Client = ImpartusClient{baseUrl: "https://bitshyd.impartus.com/api"}
