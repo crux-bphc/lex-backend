@@ -78,7 +78,26 @@ DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
         RETURN NONE;
     };
 
-    RETURN $lectures;
+    RETURN NONE;
+};
+
+// Used to pin the registered subjects of the latest session 
+DEFINE FUNCTION fn::pin_registered($user: record<user>) {
+    -- let $token = fn::get_token($user);
+    let $lectures = http::get("https://bitshyd.impartus.com/api/subjects", {
+        'Authorization': string::concat("Bearer ", $user.jwt)
+    });
+
+    let $latest_session = $lectures[0].sessionId;
+    FOR $lecture IN $lectures[WHERE sessionId = $latest_session] {
+        let $name_array = string::words($lecture.subjectName);
+        let $department = array::at($name_array, 0);
+        let $subject_code = array::at($name_array, 1);
+
+        RELATE $user->pinned->subject:[$department, $subject_code] RETURN NONE;
+    };
+
+    RETURN NONE;
 };
 
 
@@ -86,17 +105,10 @@ DEFINE EVENT extract_on_create ON user
     WHEN ($event = "CREATE" && type::is::string($value.jwt)) 
     THEN 
 {
-    let $user_record = $value.id;
 
     // Add the registered lectures of the user to the database
-    let $lectures = fn::extract_lectures($user_record);
+    let $extracted_lectures = fn::extract_lectures($value.id);
 
     // Pin the registed of the newly created user by default when they register
-    let $latest_session = $lectures[0].sessionId;
-    FOR $lecture IN $lectures[WHERE sessionId = $latest_session] {
-        let $name_array = string::words($lecture.subjectName);
-        let $department = array::at($name_array, 0);
-        let $subject_code = array::at($name_array, 1);
-        RELATE $user_record->pinned->subject:[$department, $subject_code];
-    }
+    let $pinned_subjects = fn::pin_registered($value.id)
 };
