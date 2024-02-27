@@ -10,6 +10,7 @@ import (
 	"github.com/surrealdb/surrealdb.go"
 )
 
+// Verify if the lectures are being extracted and added to the database when a new user entry is created
 func TestLectureExtraction(t *testing.T) {
 	assert := assert.New(t)
 	repo := database.GetImpartusRepository()
@@ -25,13 +26,20 @@ func TestLectureExtraction(t *testing.T) {
 	assert.Nil(err)
 	assert.Greater(subjectCount, 1)
 
-	lectureCount, err := surrealdb.SmartUnmarshal[int](repo.DB.Query("(select count() from only lecture group all limit 1).count", nil))
+	lectureCount, err := surrealdb.SmartUnmarshal[int](repo.DB.Query("(select count() from only lecture where users contains user:populate group all limit 1).count", nil))
 	assert.Nil(err)
 	assert.Greater(lectureCount, 1)
 
 	assert.GreaterOrEqual(lectureCount, subjectCount)
+
+	pinCount, err := surrealdb.SmartUnmarshal[int](repo.DB.Query("(select count() from only pinned where in = user:populate group all limit 1).count", nil))
+	assert.Nil(err)
+	assert.Greater(pinCount, 1)
+
+	assert.LessOrEqual(pinCount, subjectCount)
 }
 
+// Verify if the token is revalidated if it has not been updated since 7 days
 func TestTokenRevalidation(t *testing.T) {
 	assert := assert.New(t)
 	repo := database.GetImpartusRepository()
