@@ -24,19 +24,19 @@ func TestLectureExtraction(t *testing.T) {
 
 	subjectCount, err := surrealdb.SmartUnmarshal[int](repo.DB.Query("(select count() from only subject group all limit 1).count", nil))
 	assert.Nil(err)
-	assert.Greater(subjectCount, 1)
+	assert.Greater(subjectCount, 1, "No. of subjects > 1")
 
 	lectureCount, err := surrealdb.SmartUnmarshal[int](repo.DB.Query("(select count() from only lecture where users contains user:populate group all limit 1).count", nil))
 	assert.Nil(err)
-	assert.Greater(lectureCount, 1)
+	assert.Greater(lectureCount, 1, "No. of lectures > 1")
 
-	assert.GreaterOrEqual(lectureCount, subjectCount)
+	assert.GreaterOrEqual(lectureCount, subjectCount, "No. of lectures >= subjects")
 
 	pinCount, err := surrealdb.SmartUnmarshal[int](repo.DB.Query("(select count() from only pinned where in = user:populate group all limit 1).count", nil))
 	assert.Nil(err)
-	assert.Greater(pinCount, 1)
+	assert.Greater(pinCount, 1, "No. of pinned subjects > 1")
 
-	assert.LessOrEqual(pinCount, subjectCount)
+	assert.LessOrEqual(pinCount, subjectCount, "No. of pinned subjects is <= the subjects")
 }
 
 // Verify if the token is revalidated if it has not been updated since 7 days
@@ -53,12 +53,12 @@ func TestTokenRevalidation(t *testing.T) {
 
 	oldJwt, err := surrealdb.SmartUnmarshal[string](repo.DB.Query("fn::get_token(user:revalidate_token)", nil))
 	assert.Nil(err)
-	assert.Equal(os.Getenv("IMPARTUS_TEST_TOKEN"), oldJwt)
+	assert.Equal(os.Getenv("IMPARTUS_TEST_TOKEN"), oldJwt, "The JWT does not update")
 
 	repo.DB.Query("UPDATE user:revalidate_token set updated_at = time::now() - 7d", nil)
 
 	newJwt, err := surrealdb.SmartUnmarshal[string](repo.DB.Query("fn::get_token(user:revalidate_token)", nil))
 	assert.Nil(err)
 
-	assert.Empty(newJwt)
+	assert.Empty(newJwt, "The updated JWT should be empty")
 }
