@@ -1,6 +1,6 @@
 // Remove the testing namespace
 // need to find a better way to do this
-REMOVE NAMESPACE lex_test;
+REMOVE NAMESPACE IF EXISTS lex_test;
 
 -- ------
 -- IMPARTUS

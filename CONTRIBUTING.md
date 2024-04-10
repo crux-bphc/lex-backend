@@ -19,5 +19,5 @@
 
 ## Testing
 
-- The API tests and docs are located in the .bru files, you can view it in Bruno.
-- To run the unit tests, run `make test`
+- Modify the *.env.testing* file
+- Run `make test`
