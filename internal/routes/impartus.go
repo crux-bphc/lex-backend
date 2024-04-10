@@ -1,11 +1,11 @@
-package internal
+package routes
 
 import (
 	"fmt"
 	"log"
 	"regexp"
 
-	"github.com/crux-bphc/lex/cmd"
+	"github.com/crux-bphc/lex/internal/clients"
 	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
 )
@@ -18,8 +18,8 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ttid := ctx.Param("ttid")
 		token := ctx.Query("token")
 
-		data, err := cmd.ImpartusClient.GetDecryptionKey(token, ttid)
-		data = cmd.ImpartusClient.NormalizeDecryptionKey(data)
+		data, err := clients.ImpartusClient.GetDecryptionKey(token, ttid)
+		data = clients.ImpartusClient.NormalizeDecryptionKey(data)
 		if err != nil {
 			log.Println(err)
 		}
@@ -36,7 +36,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		hostUrl := location.Get(ctx).String()
 
-		data, err := cmd.ImpartusClient.GetIndexM3U8(token, ttid)
+		data, err := clients.ImpartusClient.GetIndexM3U8(token, ttid)
 		if err != nil {
 			log.Println(err)
 		}
@@ -54,7 +54,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		hostUrl := location.Get(ctx).String()
 
-		data, err := cmd.ImpartusClient.GetM3U8Chunk(token, m3u8)
+		data, err := clients.ImpartusClient.GetM3U8Chunk(token, m3u8)
 		if err != nil {
 			log.Println(err)
 		}

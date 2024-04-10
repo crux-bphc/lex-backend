@@ -1,10 +1,9 @@
-version: '3'
-
 services:
   db:
     image: surrealdb/surrealdb:latest
+    user: root
     entrypoint: 
-      - /surreal 
+      - /surreal
       - start
       - --auth
       - --user
@@ -12,6 +11,7 @@ services:
       - --pass
       - $DB_PASSWORD
       - --allow-all
+      - file:database.db
     healthcheck:
       test: ["CMD", "/surreal", "isready"]
       interval: 1m
@@ -21,31 +21,42 @@ services:
   migrate:
     image: surrealdb/surrealdb:latest
     entrypoint:
-      - /surreal 
-      - import 
-      - --endpoint 
+      - /surreal
+      - import
+      - --endpoint
       - http://db:8000
-      - --user 
-      - $DB_USER 
-      - --pass 
-      - $DB_PASSWORD 
-      - --ns 
-      - $DB_NAMESPACE 
-      - --db 
-      - $DB_DATABASE 
+      - --user
+      - $DB_USER
+      - --pass
+      - $DB_PASSWORD
+      - --ns
+      - $DB_NAMESPACE
+      - --db
+      - playground
       - /extras/schema.surql
-    depends_on:
-      db:
-        condition: service_healthy
+    # Commented out because it causes the db container to be recreated
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
 
-  cron:
-    build:
-      context: cron
-      dockerfile: Containerfile
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - .env
+  sql:
+    image: surrealdb/surrealdb:latest
+    entrypoint:
+      - /surreal
+      - sql
+      - --endpoint
+      - http://db:8000
+      - --user
+      - $DB_USER
+      - --pass
+      - $DB_PASSWORD
+      - --ns
+      - $DB_NAMESPACE
+      - --db
+      - playground
+    # Commented out because it causes the db container to be recreated
+    # depends_on:
+    #   db:
+    #     condition: service_healthy

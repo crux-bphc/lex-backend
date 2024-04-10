@@ -1,7 +1,6 @@
 # Setup
 
-- Install Go (project uses *1.21.0*)
-- Run `go get` to install dependencies
+- Make sure you have docker container runtime installed.
 
 # Running
 
@@ -17,3 +16,8 @@
 - The collection is stored in the *api* folder.
 - Choose the *Local* environment and setup your creds for testing.
 - Explore the API (PS: you can view the docs of individual requests in bruno).
+
+## Testing
+
+- Modify the *.env.testing* file
+- Run `make test`
