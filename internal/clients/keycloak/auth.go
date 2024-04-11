@@ -74,6 +74,7 @@ func Middleware() gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
 			})
+			return
 		}
 
 		claims, err := parseToken(token)
@@ -81,6 +82,7 @@ func Middleware() gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
 			})
+			return
 		}
 
 		ctx.Set("CLAIMS", claims)
