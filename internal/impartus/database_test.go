@@ -1,11 +1,11 @@
-package database_test
+package impartus_test
 
 import (
 	"os"
 	"testing"
 	"time"
 
-	"github.com/crux-bphc/lex/internal/database"
+	"github.com/crux-bphc/lex/internal/impartus"
 	"github.com/stretchr/testify/assert"
 	"github.com/surrealdb/surrealdb.go"
 )
@@ -13,8 +13,8 @@ import (
 // Verify if the lectures are being extracted and added to the database when a new user entry is created
 func TestLectureExtraction(t *testing.T) {
 	assert := assert.New(t)
-	repo := database.GetImpartusRepository()
-	_, err := repo.DB.Create("user:populate", database.ImpartusUser{
+	repo := impartus.Repository
+	_, err := repo.DB.Create("user:populate", impartus.User{
 		EMail:     "f20220149@mudit.com",
 		Password:  "za_warudo",
 		Jwt:       os.Getenv("IMPARTUS_TEST_TOKEN"),
@@ -42,8 +42,8 @@ func TestLectureExtraction(t *testing.T) {
 // Verify if the token is revalidated if it has not been updated since 7 days
 func TestTokenRevalidation(t *testing.T) {
 	assert := assert.New(t)
-	repo := database.GetImpartusRepository()
-	_, err := repo.DB.Create("user:revalidate_token", database.ImpartusUser{
+	repo := impartus.Repository
+	_, err := repo.DB.Create("user:revalidate_token", impartus.User{
 		EMail:     "kira_does_dev@crux.com",
 		Password:  "WRONG_PASSWORD",
 		Jwt:       os.Getenv("IMPARTUS_TEST_TOKEN"),

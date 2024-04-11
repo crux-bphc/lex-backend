@@ -15,6 +15,7 @@ func main() {
 	router.SetTrustedProxies(nil)
 
 	routes.RegisterImpartusRoutes(router)
+	routes.RegisterUserRoutes(router)
 
 	router.Run(":3000")
 }

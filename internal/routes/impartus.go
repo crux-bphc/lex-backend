@@ -5,7 +5,7 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/crux-bphc/lex/internal/clients"
+	"github.com/crux-bphc/lex/internal/impartus"
 	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
 )
@@ -18,8 +18,8 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ttid := ctx.Param("ttid")
 		token := ctx.Query("token")
 
-		data, err := clients.ImpartusClient.GetDecryptionKey(token, ttid)
-		data = clients.ImpartusClient.NormalizeDecryptionKey(data)
+		data, err := impartus.Client.GetDecryptionKey(token, ttid)
+		data = impartus.Client.NormalizeDecryptionKey(data)
 		if err != nil {
 			log.Println(err)
 		}
@@ -29,14 +29,14 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	m3u8Regex := regexp.MustCompile("http.*inm3u8=(.*)")
 
-	// Gets a video stream.
+	// Gets a video stream
 	r.GET("/lecture/:ttid/m3u8", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
 		token := ctx.Query("token")
 
 		hostUrl := location.Get(ctx).String()
 
-		data, err := clients.ImpartusClient.GetIndexM3U8(token, ttid)
+		data, err := impartus.Client.GetIndexM3U8(token, ttid)
 		if err != nil {
 			log.Println(err)
 		}
@@ -54,7 +54,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		hostUrl := location.Get(ctx).String()
 
-		data, err := clients.ImpartusClient.GetM3U8Chunk(token, m3u8)
+		data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
 		if err != nil {
 			log.Println(err)
 		}
