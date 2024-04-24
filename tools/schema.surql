@@ -51,6 +51,9 @@ DEFINE FIELD section ON lecture TYPE int;
 DEFINE FIELD professor ON lecture TYPE string;
 DEFINE FIELD users ON lecture TYPE set<record<user>>;
 
+-- define the pinned lectures table
+DEFINE TABLE pinned TYPE RELATION FROM user TO subject;
+
 // Used to extract the registered lectures and add it to the global dataset
 DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
     -- let $token = fn::get_token($user);
