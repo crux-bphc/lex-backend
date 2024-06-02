@@ -15,6 +15,7 @@ DEFINE FIELD password ON user TYPE string;
 DEFINE FIELD jwt ON user TYPE option<string>;
 DEFINE FIELD updated_at ON user TYPE datetime DEFAULT time::now();
 
+DEFINE INDEX userEmailIndex ON TABLE user COLUMNS email UNIQUE;
 
 DEFINE FUNCTION fn::get_token($user: record<user>) {
     IF (time::now() - $user.updated_at > 6d) THEN
