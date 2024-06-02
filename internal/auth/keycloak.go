@@ -16,7 +16,8 @@ var jwks keyfunc.Keyfunc
 type UserClaims struct {
 	jwt.RegisteredClaims
 	// TODO: add more user attributes
-	BITS_ID string `json:"bits_id"`
+	EMail string `json:"email"`
+	// BITS_ID string `json:"bits_id"`
 }
 
 func init() {
@@ -71,7 +72,7 @@ func Middleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		token, err := getBearerToken(ctx)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": err.Error(),
 			})
 			return
@@ -79,7 +80,7 @@ func Middleware() gin.HandlerFunc {
 
 		claims, err := parseToken(token)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": err.Error(),
 			})
 			return

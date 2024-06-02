@@ -68,12 +68,12 @@ func (repo *impartusRepository) GetSubjects() ([]Subject, error) {
 }
 
 // Get the list of subjects that are pinned by the user
-func (repo *impartusRepository) GetPinnedSubjects(userId string) ([]Subject, error) {
+func (repo *impartusRepository) GetPinnedSubjects(email string) ([]Subject, error) {
 	data, err := surrealdb.SmartUnmarshal[[]Subject](
 		repo.DB.Query(
-			"SELECT * from subject where <-pinned<-(user where id = $user)",
+			"SELECT * from subject where <-pinned<-(user where email = $email)",
 			map[string]interface{}{
-				"user": userId,
+				"email": email,
 			},
 		),
 	)

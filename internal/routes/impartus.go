@@ -5,48 +5,122 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"time"
 
+	"github.com/crux-bphc/lex/internal/auth"
 	"github.com/crux-bphc/lex/internal/impartus"
 	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
 )
 
-func registerUser(ctx *gin.Context) {
-	type requestBody struct {
-		Password string `json:"password" binding:"required"`
-		Token    string `json:"token" binding:"required"`
-	}
-	var body requestBody
-	ctx.BindJSON(&body)
-
-	// TODO: validate received impartus JWT
-
-	user := impartus.User{
-		// TODO: get email from keycloak
-		EMail:    "f2022xxxx@hyderabad.bits-pilani.ac.in",
-		Password: body.Password,
-		Jwt:      body.Token,
-	}
-
-	// create user in database
-	_, err := impartus.Repository.DB.Create("user", &user)
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
-	ctx.JSON(200, gin.H{
-		"message": "Registered",
-		// TODO: add number of subjects/lectures added to database to response
-	})
-}
-
 func RegisterImpartusRoutes(router *gin.Engine) {
 	r := router.Group("/impartus")
 
-	r.POST("/register", registerUser)
+	authorized := r.Group("/")
+	authorized.Use(auth.Middleware())
+
+	authorized.GET("/user", func(ctx *gin.Context) {
+		// TODO: return a bunch of user info such as number of pinned subjects etc
+		// also return if user currently has a valid impartus jwt
+	})
+
+	// Creates a new entry for the user in the database.
+	authorized.POST("/user", func(ctx *gin.Context) {
+		body := struct {
+			Password string `json:"password" binding:"required"`
+		}{}
+
+		if err := ctx.BindJSON(&body); err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		claims := auth.GetClaims(ctx)
+
+		impartusToken, err := impartus.Client.GetToken(claims.EMail, body.Password)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		user := impartus.User{
+			EMail:     claims.EMail,
+			Password:  body.Password,
+			Jwt:       impartusToken,
+			UpdatedAt: time.Now(),
+		}
+
+		// create user in database
+		_, err = impartus.Repository.DB.Create("user", user)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"message": "Registered",
+			// TODO: add number of subjects/lectures added to database to response
+		})
+	})
+
+	r.GET("/subject", func(ctx *gin.Context) {
+		// this is the id of the subject stored in the database
+		subjectId := ctx.Query("id")
+		if len(subjectId) == 0 {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"message": "please provide a valid 'id' parameter for your subject",
+			})
+			return
+		}
+
+		lectures, err := impartus.Repository.GetLectures(subjectId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"count":    len(lectures),
+			"sections": lectures,
+		})
+	})
+
+	r.GET("/subject/search", func(ctx *gin.Context) {
+		// TODO: subject search endpoint
+	})
+
+	authorized.GET("/subject/pinned", func(ctx *gin.Context) {
+		claims := auth.GetClaims(ctx)
+		subjects, err := impartus.Repository.GetPinnedSubjects(claims.EMail)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"count":    len(subjects),
+			"subjects": subjects,
+		})
+	})
+
+	authorized.PATCH("/subject/pinned", func(ctx *gin.Context) {
+		// TODO: add and remove subjects from the user's pinned section
+	})
+
+	r.GET("/session/:sessionId/:subjectId", func(ctx *gin.Context) {
+		// TODO: return list of lectures from the the specific lecture section using
+		// the registered user's impartus jwt token
+	})
 
 	// Returns the decryption key without the need for a Authorization header
 	r.GET("/lecture/:ttid/key", func(ctx *gin.Context) {
