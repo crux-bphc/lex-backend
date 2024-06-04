@@ -1,6 +1,7 @@
 package impartus
 
 import (
+	"errors"
 	"log"
 	"os"
 	"time"
@@ -96,5 +97,24 @@ func (repo *impartusRepository) GetLectures(subjectId string) ([]Lecture, error)
 	if err != nil {
 		return nil, err
 	}
+	return data, nil
+}
+
+// Get a valid impartus jwt token of a user who is registered to the lecture
+func (repo *impartusRepository) GetLectureToken(lectureId string) (token string, err error) {
+	data, err := surrealdb.SmartUnmarshal[string](
+		repo.DB.Query("RETURN array::first((SELECT VALUE fn::get_token(id) from $lecture.users)[WHERE !type::is::none($this)]);", map[string]interface{}{
+			"lecture": lectureId,
+		}),
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	if len(data) == 0 {
+		return "", errors.New("no valid user is registered under this course")
+	}
+
 	return data, nil
 }

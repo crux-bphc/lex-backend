@@ -170,9 +170,29 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		})
 	})
 
-	r.GET("/session/:sessionId/:subjectId", func(ctx *gin.Context) {
-		// TODO: return list of lectures from the the specific lecture section using
-		// the registered user's impartus jwt token
+	// Returns a list of videos from the lecture using a registered user's impartus jwt token
+	r.GET("/course/:subjectId/:sessionId", func(ctx *gin.Context) {
+		sessionId := ctx.Param("sessionId")
+		subjectId := ctx.Param("subjectId")
+		lectureId := fmt.Sprintf("lecture:[%s,%s]", sessionId, subjectId)
+
+		impartusToken, err := impartus.Repository.GetLectureToken(lectureId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		data, err := impartus.Client.GetVideos(impartusToken, subjectId, sessionId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.Data(200, "application/json", data)
 	})
 
 	// Returns the decryption key for the particular video without an Authorization header
@@ -215,10 +235,8 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	cipherUriRegex := regexp.MustCompile(`URI=".*ttid=(\d*)&.*"`)
 
-	/*
-		Direct link to the m3u8 file with the uri of the decryption key for the AES-128 cipher
-		replaced by the server implementation
-	*/
+	// Direct link to the m3u8 file with the uri of the decryption key for the AES-128 cipher
+	// replaced by the server implementation
 	r.GET("/chunk/m3u8", func(ctx *gin.Context) {
 		m3u8 := ctx.Query("m3u8")
 		token := ctx.Query("token")

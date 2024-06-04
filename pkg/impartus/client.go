@@ -90,6 +90,25 @@ func (client *ImpartusClient) GetSubjects(token string) ([]byte, error) {
 	return data, nil
 }
 
+// Gets a list of video from impartus for that specific subject and session
+func (client *ImpartusClient) GetVideos(token, subjectId, sessionId string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/subjects/%s/lectures/%s", client.BaseUrl, subjectId, sessionId), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("user-agent", fakeuseragent.RandomUserAgent())
+
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return io.ReadAll(resp.Body)
+}
+
 func (client *ImpartusClient) GetDecryptionKey(token string, ttid string) ([]byte, error) {
 	decryptionKeyEndpoint := fmt.Sprintf("%s/fetchvideo/getVideoKey?ttid=%s&keyid=0", client.BaseUrl, ttid)
 	req, err := http.NewRequest(http.MethodGet, decryptionKeyEndpoint, nil)
