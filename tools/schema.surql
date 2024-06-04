@@ -76,9 +76,9 @@ DEFINE TABLE pinned TYPE RELATION FROM user TO subject;
 
 // Used to extract the registered lectures and add it to the global dataset
 DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
-    let $token = fn::get_token($user);
+    let $impartus_jwt = fn::get_token($user);
     let $lectures = http::get("https://bitshyd.impartus.com/api/subjects", {
-        'Authorization': string::concat("Bearer ", $token)
+        'Authorization': string::concat("Bearer ", $impartus_jwt)
     });
 
     FOR $lecture IN $lectures {
@@ -106,9 +106,9 @@ DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
 
 // Used to pin the registered subjects of the latest session 
 DEFINE FUNCTION fn::pin_registered($user: record<user>) {
-    let $token = fn::get_token($user);
+    let $impartus_jwt = fn::get_token($user);
     let $lectures = http::get("https://bitshyd.impartus.com/api/subjects", {
-        'Authorization': string::concat("Bearer ", $token)
+        'Authorization': string::concat("Bearer ", $impartus_jwt)
     });
 
     // this session id is for the one the student is currently part of
