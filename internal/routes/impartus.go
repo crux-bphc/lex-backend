@@ -114,12 +114,60 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		})
 	})
 
+	// Add a subject to the user's pinned section
 	authorized.POST("/user/subjects", func(ctx *gin.Context) {
-		// TODO: add subjects from the user's pinned section
+		claims := auth.GetClaims(ctx)
+
+		subjectId := ctx.Query("id")
+		if len(subjectId) == 0 {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"message": "please provide a valid 'id' parameter for your subject",
+			})
+			return
+		}
+
+		_, err := impartus.Repository.DB.Query(`LET $user = (SELECT VALUE id FROM user WHERE email = $email);RELATE ONLY $user->pinned->$subjectId`, map[string]interface{}{
+			"email":     claims.EMail,
+			"subjectId": subjectId,
+		})
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"message": fmt.Sprintf("pinned %s", subjectId),
+		})
 	})
 
+	// Remove a subject from the user's pinned section
 	authorized.DELETE("/user/subjects", func(ctx *gin.Context) {
-		// TODO: remove subjects from the user's pinned section
+		claims := auth.GetClaims(ctx)
+
+		subjectId := ctx.Query("id")
+		if len(subjectId) == 0 {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"message": "please provide a valid 'id' parameter for your subject",
+			})
+			return
+		}
+
+		_, err := impartus.Repository.DB.Query(`LET $user = (SELECT VALUE id FROM user WHERE email = $email);DELETE $user->bought WHERE out=$subjectId`, map[string]interface{}{
+			"email":     claims.EMail,
+			"subjectId": subjectId,
+		})
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"message": fmt.Sprintf("unpinned %s", subjectId),
+		})
 	})
 
 	r.GET("/session/:sessionId/:subjectId", func(ctx *gin.Context) {
