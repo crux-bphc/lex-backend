@@ -15,7 +15,7 @@ type ImpartusClient struct {
 }
 
 // Returns the impartus jwt token which is active for 7 days
-func (client *ImpartusClient) GetToken(username string, password string) (string, error) {
+func (client *ImpartusClient) GetToken(username, password string) (string, error) {
 	postBody, _ := json.Marshal(map[string]string{
 		"username": username,
 		"password": password,
@@ -82,12 +82,7 @@ func (client *ImpartusClient) GetSubjects(token string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return io.ReadAll(resp.Body)
 }
 
 // Gets a list of video from impartus for that specific subject and session
@@ -109,7 +104,7 @@ func (client *ImpartusClient) GetVideos(token, subjectId, sessionId string) ([]b
 	return io.ReadAll(resp.Body)
 }
 
-func (client *ImpartusClient) GetDecryptionKey(token string, ttid string) ([]byte, error) {
+func (client *ImpartusClient) GetDecryptionKey(token, ttid string) ([]byte, error) {
 	decryptionKeyEndpoint := fmt.Sprintf("%s/fetchvideo/getVideoKey?ttid=%s&keyid=0", client.BaseUrl, ttid)
 	req, err := http.NewRequest(http.MethodGet, decryptionKeyEndpoint, nil)
 	if err != nil {
@@ -125,12 +120,7 @@ func (client *ImpartusClient) GetDecryptionKey(token string, ttid string) ([]byt
 	defer resp.Body.Close()
 
 	// Get the data using the Bearer token
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return io.ReadAll(resp.Body)
 }
 
 func (client *ImpartusClient) NormalizeDecryptionKey(key []byte) []byte {
@@ -142,7 +132,7 @@ func (client *ImpartusClient) NormalizeDecryptionKey(key []byte) []byte {
 	return data
 }
 
-func (client *ImpartusClient) GetIndexM3U8(token string, ttid string) ([]byte, error) {
+func (client *ImpartusClient) GetIndexM3U8(token, ttid string) ([]byte, error) {
 	lectureUrl := fmt.Sprintf("%s/fetchvideo?type=index.m3u8&ttid=%s&token=%s", client.BaseUrl, ttid, token)
 
 	resp, err := http.Get(lectureUrl)
@@ -151,15 +141,10 @@ func (client *ImpartusClient) GetIndexM3U8(token string, ttid string) ([]byte, e
 	}
 	defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return io.ReadAll(resp.Body)
 }
 
-func (client *ImpartusClient) GetM3U8Chunk(token string, m3u8 string) ([]byte, error) {
+func (client *ImpartusClient) GetM3U8Chunk(token, m3u8 string) ([]byte, error) {
 	chunkUrl := fmt.Sprintf("%s/fetchvideo?tag=LC&inm3u8=%s", client.BaseUrl, m3u8)
 	resp, err := http.Get(chunkUrl)
 	if err != nil {
@@ -168,10 +153,5 @@ func (client *ImpartusClient) GetM3U8Chunk(token string, m3u8 string) ([]byte, e
 	defer resp.Body.Close()
 
 	// the raw m3u8 from impartus
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return io.ReadAll(resp.Body)
 }

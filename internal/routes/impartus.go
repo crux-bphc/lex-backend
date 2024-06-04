@@ -209,7 +209,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.Data(200, "application/pgp-keys", []byte(data))
+		ctx.Data(200, "application/pgp-keys", data)
 	})
 
 	m3u8Regex := regexp.MustCompile("http.*inm3u8=(.*)")

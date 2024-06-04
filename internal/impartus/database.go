@@ -62,16 +62,12 @@ type Lecture struct {
 
 // TODO: add ability to search for and filter lectures
 func (repo *impartusRepository) GetSubjects() ([]Subject, error) {
-	data, err := surrealdb.SmartUnmarshal[[]Subject](repo.DB.Select("subject"))
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return surrealdb.SmartUnmarshal[[]Subject](repo.DB.Select("subject"))
 }
 
 // Get the list of subjects that are pinned by the user
 func (repo *impartusRepository) GetPinnedSubjects(email string) ([]Subject, error) {
-	data, err := surrealdb.SmartUnmarshal[[]Subject](
+	return surrealdb.SmartUnmarshal[[]Subject](
 		repo.DB.Query(
 			"SELECT * from subject where <-pinned<-(user where email = $email)",
 			map[string]interface{}{
@@ -79,25 +75,15 @@ func (repo *impartusRepository) GetPinnedSubjects(email string) ([]Subject, erro
 			},
 		),
 	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }
 
 // Get all lecture sections corresponding to a particular subject
 func (repo *impartusRepository) GetLectures(subjectId string) ([]Lecture, error) {
-	data, err := surrealdb.SmartUnmarshal[[]Lecture](
+	return surrealdb.SmartUnmarshal[[]Lecture](
 		repo.DB.Query("SELECT * FROM lecture WHERE subject = $subject", map[string]interface{}{
 			"subject": subjectId,
 		}),
 	)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
 }
 
 // Get a valid impartus jwt token of a user who is registered to the lecture
