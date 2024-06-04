@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -10,21 +11,63 @@ import (
 	"github.com/crux-bphc/lex/internal/impartus"
 	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
+	"github.com/surrealdb/surrealdb.go"
 )
+
+// ensures that the user accessing multipartus is still using the same password
+// which means that this user's courses are accessible to other users.
+func impartusValidJwtMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		claims := auth.GetClaims(ctx)
+		impartusJwt, err := surrealdb.SmartUnmarshal[string](
+			impartus.Repository.DB.Query(
+				"SELECT VALUE fn::get_token(id) FROM user WHERE email = $email",
+				map[string]interface{}{
+					"email": claims.EMail,
+				},
+			),
+		)
+
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		if len(impartusJwt) == 0 {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"message": errors.New("enter correct impartus password to access resource"),
+			})
+			return
+		}
+
+		ctx.Set("IMPARTUS_JWT", impartusJwt)
+
+		ctx.Next()
+	}
+}
+
+// returns the already fetched impartus jwt token of the user from the database
+func getImpartusJwtForUser(ctx *gin.Context) string {
+	token, _ := ctx.Get("IMPARTUS_JWT")
+	return token.(string)
+}
 
 func RegisterImpartusRoutes(router *gin.Engine) {
 	r := router.Group("/impartus")
+	r.Use(auth.Middleware())
 
 	authorized := r.Group("/")
-	authorized.Use(auth.Middleware())
+	authorized.Use(impartusValidJwtMiddleware())
 
-	authorized.GET("/user", func(ctx *gin.Context) {
+	r.GET("/user", func(ctx *gin.Context) {
 		// TODO: return a bunch of user info such as number of pinned subjects etc
 		// also return if user currently has a valid impartus jwt
 	})
 
 	// Creates a new entry for the user in the database.
-	authorized.POST("/user", func(ctx *gin.Context) {
+	r.POST("/user", func(ctx *gin.Context) {
 		body := struct {
 			Password string `json:"password" binding:"required"`
 		}{}
@@ -98,7 +141,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	})
 
 	// Returns the list of subjects the user has pinned
-	authorized.GET("/user/subjects", func(ctx *gin.Context) {
+	r.GET("/user/subjects", func(ctx *gin.Context) {
 		claims := auth.GetClaims(ctx)
 		subjects, err := impartus.Repository.GetPinnedSubjects(claims.EMail)
 		if err != nil {
@@ -115,7 +158,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	})
 
 	// Add a subject to the user's pinned section
-	authorized.POST("/user/subjects", func(ctx *gin.Context) {
+	r.POST("/user/subjects", func(ctx *gin.Context) {
 		claims := auth.GetClaims(ctx)
 
 		subjectId := ctx.Query("id")
@@ -143,7 +186,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	})
 
 	// Remove a subject from the user's pinned section
-	authorized.DELETE("/user/subjects", func(ctx *gin.Context) {
+	r.DELETE("/user/subjects", func(ctx *gin.Context) {
 		claims := auth.GetClaims(ctx)
 
 		subjectId := ctx.Query("id")
@@ -196,9 +239,9 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	})
 
 	// Returns the decryption key for the particular video without an Authorization header
-	r.GET("/video/:ttid/key", func(ctx *gin.Context) {
+	authorized.GET("/video/:ttid/key", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
-		token := ctx.Query("token")
+		token := getImpartusJwtForUser(ctx)
 
 		data, err := impartus.Client.GetDecryptionKey(token, ttid)
 		data = impartus.Client.NormalizeDecryptionKey(data)
@@ -215,9 +258,9 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	m3u8Regex := regexp.MustCompile("http.*inm3u8=(.*)")
 
 	// Gets a video stream
-	r.GET("/video/:ttid/m3u8", func(ctx *gin.Context) {
+	authorized.GET("/video/:ttid/m3u8", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
-		token := ctx.Query("token")
+		token := getImpartusJwtForUser(ctx)
 
 		hostUrl := location.Get(ctx).String()
 
@@ -237,9 +280,9 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	// Direct link to the m3u8 file with the uri of the decryption key for the AES-128 cipher
 	// replaced by the server implementation
-	r.GET("/chunk/m3u8", func(ctx *gin.Context) {
+	authorized.GET("/chunk/m3u8", func(ctx *gin.Context) {
 		m3u8 := ctx.Query("m3u8")
-		token := ctx.Query("token")
+		token := getImpartusJwtForUser(ctx)
 
 		hostUrl := location.Get(ctx).String()
 
