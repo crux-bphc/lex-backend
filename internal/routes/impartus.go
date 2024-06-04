@@ -2,7 +2,6 @@ package routes
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 	"time"
@@ -69,6 +68,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		})
 	})
 
+	// Returns a list of all the valid lecture sections for the particular subject
 	r.GET("/subject", func(ctx *gin.Context) {
 		// this is the id of the subject stored in the database
 		subjectId := ctx.Query("id")
@@ -97,7 +97,8 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		// TODO: subject search endpoint
 	})
 
-	authorized.GET("/subject/pinned", func(ctx *gin.Context) {
+	// Returns the list of subjects the user has pinned
+	authorized.GET("/user/subjects", func(ctx *gin.Context) {
 		claims := auth.GetClaims(ctx)
 		subjects, err := impartus.Repository.GetPinnedSubjects(claims.EMail)
 		if err != nil {
@@ -113,8 +114,12 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		})
 	})
 
-	authorized.PATCH("/subject/pinned", func(ctx *gin.Context) {
-		// TODO: add and remove subjects from the user's pinned section
+	authorized.POST("/user/subjects", func(ctx *gin.Context) {
+		// TODO: add subjects from the user's pinned section
+	})
+
+	authorized.DELETE("/user/subjects", func(ctx *gin.Context) {
+		// TODO: remove subjects from the user's pinned section
 	})
 
 	r.GET("/session/:sessionId/:subjectId", func(ctx *gin.Context) {
@@ -122,15 +127,18 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		// the registered user's impartus jwt token
 	})
 
-	// Returns the decryption key without the need for a Authorization header
-	r.GET("/lecture/:ttid/key", func(ctx *gin.Context) {
+	// Returns the decryption key for the particular video without an Authorization header
+	r.GET("/video/:ttid/key", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
 		token := ctx.Query("token")
 
 		data, err := impartus.Client.GetDecryptionKey(token, ttid)
 		data = impartus.Client.NormalizeDecryptionKey(data)
 		if err != nil {
-			log.Println(err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
 		}
 
 		ctx.Data(200, "application/pgp-keys", []byte(data))
@@ -139,7 +147,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	m3u8Regex := regexp.MustCompile("http.*inm3u8=(.*)")
 
 	// Gets a video stream
-	r.GET("/lecture/:ttid/m3u8", func(ctx *gin.Context) {
+	r.GET("/video/:ttid/m3u8", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
 		token := ctx.Query("token")
 
@@ -147,7 +155,10 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		data, err := impartus.Client.GetIndexM3U8(token, ttid)
 		if err != nil {
-			log.Println(err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
 		}
 		data = m3u8Regex.ReplaceAll(data, []byte(fmt.Sprintf("%s/impartus/chunk/m3u8?m3u8=$1&token=%s", hostUrl, token)))
 
@@ -156,7 +167,10 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	cipherUriRegex := regexp.MustCompile(`URI=".*ttid=(\d*)&.*"`)
 
-	// Direct link to the m3u8 file with the uri of the decryption key for the AES-128 cipher replaced by the server implementation
+	/*
+		Direct link to the m3u8 file with the uri of the decryption key for the AES-128 cipher
+		replaced by the server implementation
+	*/
 	r.GET("/chunk/m3u8", func(ctx *gin.Context) {
 		m3u8 := ctx.Query("m3u8")
 		token := ctx.Query("token")
@@ -165,10 +179,13 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
 		if err != nil {
-			log.Println(err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
 		}
 
-		decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/lecture/$1/key?token=%s"`, hostUrl, token)
+		decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/video/$1/key?token=%s"`, hostUrl, token)
 		data = cipherUriRegex.ReplaceAll(data, []byte(decryptionKeyUrl))
 		ctx.Data(200, "application/x-mpegurl", data)
 	})

@@ -53,9 +53,10 @@ type Subject struct {
 
 type Lecture struct {
 	surrealdb.Basemodel `table:"lecture"`
-	ID                  string `json:"id,omitempty"`
-	Section             int    `json:"section,omitempty"`
-	Professor           string `json:"professor,omitempty"`
+	ID                  string   `json:"id,omitempty"`
+	Section             int      `json:"section,omitempty"`
+	Professor           string   `json:"professor,omitempty"`
+	Users               []string `json:"-"`
 }
 
 // TODO: add ability to search for and filter lectures

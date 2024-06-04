@@ -18,6 +18,9 @@ DEFINE FIELD updated_at ON user TYPE datetime DEFAULT time::now();
 DEFINE INDEX userEmailIndex ON TABLE user COLUMNS email UNIQUE;
 
 DEFINE FUNCTION fn::get_token($user: record<user>) {
+    IF (type::is::none($user.jwt)) THEN
+        RETURN NONE;
+    END;
     IF (time::now() - $user.updated_at > 6d) THEN
         // TODO: correct fetch logic
         UPDATE ONLY $user SET jwt = function() {
@@ -42,11 +45,15 @@ DEFINE EVENT token_updated ON user
 };
 
 -- define the subjects table
+// Defines the course independently of the session or subject id.
 DEFINE TABLE subject SCHEMAFULL;
+// id field is of the form `[department (eg: CS,ECE), subject_code (eg, F211)]`
 DEFINE FIELD name ON subject TYPE string;
 
 -- define the lectures table
+// Defines the lectures across various years and lecture sections.
 DEFINE TABLE lecture SCHEMAFULL;
+// id field is of the form `[session_id (defines which sem the course was taken), subject_id]`
 DEFINE FIELD subject ON lecture TYPE record<subject>;
 DEFINE FIELD section ON lecture TYPE int;
 DEFINE FIELD professor ON lecture TYPE string;
@@ -92,6 +99,7 @@ DEFINE FUNCTION fn::pin_registered($user: record<user>) {
         'Authorization': string::concat("Bearer ", $user.jwt)
     });
 
+    // this session id is for the one the student is currently part of
     let $latest_session = $lectures[0].sessionId;
     FOR $lecture IN $lectures[WHERE sessionId = $latest_session] {
         let $name_array = string::words($lecture.subjectName);
