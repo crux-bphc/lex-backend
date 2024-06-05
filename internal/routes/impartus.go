@@ -36,7 +36,7 @@ func impartusValidJwtMiddleware() gin.HandlerFunc {
 		}
 
 		if len(impartusJwt) == 0 {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"message": errors.New("enter correct impartus password to access resource"),
 			})
 			return
@@ -105,7 +105,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(200, gin.H{
+		ctx.JSON(http.StatusOK, gin.H{
 			"message": "Registered",
 			// TODO: add number of subjects/lectures added to database to response
 		})
@@ -130,7 +130,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(200, gin.H{
+		ctx.JSON(http.StatusOK, gin.H{
 			"count":    len(lectures),
 			"sections": lectures,
 		})
@@ -151,7 +151,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(200, gin.H{
+		ctx.JSON(http.StatusOK, gin.H{
 			"count":    len(subjects),
 			"subjects": subjects,
 		})
@@ -180,7 +180,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(200, gin.H{
+		ctx.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("pinned %s", subjectId),
 		})
 	})
@@ -208,7 +208,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(200, gin.H{
+		ctx.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("unpinned %s", subjectId),
 		})
 	})
@@ -235,7 +235,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.Data(200, "application/json", data)
+		ctx.Data(http.StatusOK, "application/json", data)
 	})
 
 	// Returns the decryption key for the particular video without an Authorization header
@@ -252,7 +252,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.Data(200, "application/pgp-keys", data)
+		ctx.Data(http.StatusOK, "application/pgp-keys", data)
 	})
 
 	m3u8Regex := regexp.MustCompile("http.*inm3u8=(.*)")
@@ -273,7 +273,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 		data = m3u8Regex.ReplaceAll(data, []byte(fmt.Sprintf("%s/impartus/chunk/m3u8?m3u8=$1&token=%s", hostUrl, token)))
 
-		ctx.Data(200, "application/x-mpegurl", data)
+		ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 	})
 
 	cipherUriRegex := regexp.MustCompile(`URI=".*ttid=(\d*)&.*"`)
@@ -296,6 +296,6 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/video/$1/key?token=%s"`, hostUrl, token)
 		data = cipherUriRegex.ReplaceAll(data, []byte(decryptionKeyUrl))
-		ctx.Data(200, "application/x-mpegurl", data)
+		ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 	})
 }
