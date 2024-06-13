@@ -111,6 +111,7 @@ func (client *ImpartusClient) GetDecryptionKey(token, ttid string) ([]byte, erro
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("user-agent", fakeuseragent.RandomUserAgent())
 
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(req)
@@ -134,8 +135,14 @@ func (client *ImpartusClient) NormalizeDecryptionKey(key []byte) []byte {
 
 func (client *ImpartusClient) GetIndexM3U8(token, ttid string) ([]byte, error) {
 	lectureUrl := fmt.Sprintf("%s/fetchvideo?type=index.m3u8&ttid=%s&token=%s", client.BaseUrl, ttid, token)
+	req, err := http.NewRequest(http.MethodGet, lectureUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("user-agent", fakeuseragent.RandomUserAgent())
 
-	resp, err := http.Get(lectureUrl)
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +153,15 @@ func (client *ImpartusClient) GetIndexM3U8(token, ttid string) ([]byte, error) {
 
 func (client *ImpartusClient) GetM3U8Chunk(token, m3u8 string) ([]byte, error) {
 	chunkUrl := fmt.Sprintf("%s/fetchvideo?tag=LC&inm3u8=%s", client.BaseUrl, m3u8)
-	resp, err := http.Get(chunkUrl)
+	req, err := http.NewRequest(http.MethodGet, chunkUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("user-agent", fakeuseragent.RandomUserAgent())
+
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
+
 	if err != nil {
 		return nil, err
 	}
