@@ -1,5 +1,13 @@
 {
   "version": "1",
   "name": "Lex API",
-  "type": "collection"
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "presets": {
+    "requestType": "http",
+    "requestUrl": "{{baseUrl}}/"
+  }
 }
