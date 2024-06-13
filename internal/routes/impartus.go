@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/crux-bphc/lex/internal/auth"
@@ -21,7 +22,7 @@ func impartusValidJwtMiddleware() gin.HandlerFunc {
 		claims := auth.GetClaims(ctx)
 		impartusJwt, err := surrealdb.SmartUnmarshal[string](
 			impartus.Repository.DB.Query(
-				"SELECT VALUE fn::get_token(id) FROM user WHERE email = $email",
+				"SELECT VALUE fn::get_token(id) FROM ONLY user WHERE email = $email LIMIT 1",
 				map[string]interface{}{
 					"email": claims.EMail,
 				},
@@ -111,16 +112,27 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		})
 	})
 
-	// Returns a list of all the valid lecture sections for the particular subject
 	r.GET("/subject", func(ctx *gin.Context) {
-		// this is the id of the subject stored in the database
-		subjectId := ctx.Query("id")
-		if len(subjectId) == 0 {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"message": "please provide a valid 'id' parameter for your subject",
+		// TODO: subject search endpoint
+		// for now it just returns all the subjects
+		subjects, err := impartus.Repository.GetSubjects()
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
 			})
 			return
 		}
+
+		ctx.JSON(http.StatusOK, subjects)
+	})
+
+	// Returns a list of all the valid lecture sections for the particular subject
+	r.GET("/subject/:department/:code", func(ctx *gin.Context) {
+		department := strings.ReplaceAll(ctx.Param("department"), ",", "/")
+
+		subjectCode := ctx.Param("code")
+
+		subjectId := fmt.Sprintf("subject:['%s','%s']", department, subjectCode)
 
 		lectures, err := impartus.Repository.GetLectures(subjectId)
 		if err != nil {
@@ -130,14 +142,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"count":    len(lectures),
-			"sections": lectures,
-		})
-	})
-
-	r.GET("/subject/search", func(ctx *gin.Context) {
-		// TODO: subject search endpoint
+		ctx.JSON(http.StatusOK, lectures)
 	})
 
 	// Returns the list of subjects the user has pinned
@@ -151,10 +156,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"count":    len(subjects),
-			"subjects": subjects,
-		})
+		ctx.JSON(http.StatusOK, subjects)
 	})
 
 	// Add a subject to the user's pinned section
@@ -214,7 +216,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	})
 
 	// Returns a list of videos from the lecture using a registered user's impartus jwt token
-	r.GET("/course/:subjectId/:sessionId", func(ctx *gin.Context) {
+	r.GET("/lecture/:sessionId/:subjectId/", func(ctx *gin.Context) {
 		sessionId := ctx.Param("sessionId")
 		subjectId := ctx.Param("subjectId")
 		lectureId := fmt.Sprintf("lecture:[%s,%s]", sessionId, subjectId)
@@ -244,13 +246,14 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		token := getImpartusJwtForUser(ctx)
 
 		data, err := impartus.Client.GetDecryptionKey(token, ttid)
-		data = impartus.Client.NormalizeDecryptionKey(data)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 			})
 			return
 		}
+
+		data = impartus.Client.NormalizeDecryptionKey(data)
 
 		ctx.Data(http.StatusOK, "application/pgp-keys", data)
 	})
@@ -271,7 +274,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			})
 			return
 		}
-		data = m3u8Regex.ReplaceAll(data, []byte(fmt.Sprintf("%s/impartus/chunk/m3u8?m3u8=$1&token=%s", hostUrl, token)))
+		data = m3u8Regex.ReplaceAll(data, []byte(fmt.Sprintf("%s/impartus/chunk/m3u8?m3u8=$1", hostUrl)))
 
 		ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 	})
@@ -294,7 +297,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/video/$1/key?token=%s"`, hostUrl, token)
+		decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/video/$1/key"`, hostUrl)
 		data = cipherUriRegex.ReplaceAll(data, []byte(decryptionKeyUrl))
 		ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 	})
