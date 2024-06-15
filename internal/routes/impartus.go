@@ -159,8 +159,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ctx.JSON(http.StatusOK, subjects)
 	})
 
-	// Add a subject to the user's pinned section
-	r.POST("/user/subjects", func(ctx *gin.Context) {
+	modifyPinnedSubjects := func(ctx *gin.Context) {
 		claims := auth.GetClaims(ctx)
 
 		subjectId := ctx.Query("id")
@@ -171,10 +170,21 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		_, err := impartus.Repository.DB.Query(`LET $user = (SELECT VALUE id FROM user WHERE email = $email);RELATE ONLY $user->pinned->$subjectId`, map[string]interface{}{
-			"email":     claims.EMail,
-			"subjectId": subjectId,
-		})
+		var err error
+
+		switch ctx.Request.Method {
+		case http.MethodPost:
+			_, err = impartus.Repository.DB.Query(`LET $user = (SELECT VALUE id FROM user WHERE email = $email);RELATE ONLY $user->pinned->$subjectId`, map[string]interface{}{
+				"email":     claims.EMail,
+				"subjectId": subjectId,
+			})
+		case http.MethodDelete:
+			_, err = impartus.Repository.DB.Query(`LET $user = (SELECT VALUE id FROM user WHERE email = $email);DELETE $user->bought WHERE out=$subjectId`, map[string]interface{}{
+				"email":     claims.EMail,
+				"subjectId": subjectId,
+			})
+		}
+
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
@@ -183,37 +193,15 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("pinned %s", subjectId),
+			"message": fmt.Sprintf("action on %s successful", subjectId),
 		})
-	})
+	}
+
+	// Add a subject to the user's pinned section
+	r.POST("/user/subjects", modifyPinnedSubjects)
 
 	// Remove a subject from the user's pinned section
-	r.DELETE("/user/subjects", func(ctx *gin.Context) {
-		claims := auth.GetClaims(ctx)
-
-		subjectId := ctx.Query("id")
-		if len(subjectId) == 0 {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"message": "please provide a valid 'id' parameter for your subject",
-			})
-			return
-		}
-
-		_, err := impartus.Repository.DB.Query(`LET $user = (SELECT VALUE id FROM user WHERE email = $email);DELETE $user->bought WHERE out=$subjectId`, map[string]interface{}{
-			"email":     claims.EMail,
-			"subjectId": subjectId,
-		})
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("unpinned %s", subjectId),
-		})
-	})
+	r.DELETE("/user/subjects", modifyPinnedSubjects)
 
 	// Returns a list of videos from the lecture using a registered user's impartus jwt token
 	r.GET("/lecture/:sessionId/:subjectId/", func(ctx *gin.Context) {
