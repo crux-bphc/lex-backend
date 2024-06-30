@@ -1,0 +1,15 @@
+meta {
+  name: Get video chunk
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/impartus/chunk/m3u8?m3u8=http%3A%2F%2Flocalhost%2F%2Fdownload1%2F9472540_hls%2F854x480_30%2F854x480_30.m3u8
+  body: none
+  auth: inherit
+}
+
+params:query {
+  m3u8: http%3A%2F%2Flocalhost%2F%2Fdownload1%2F9472540_hls%2F854x480_30%2F854x480_30.m3u8
+}

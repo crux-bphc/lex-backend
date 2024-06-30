@@ -1,0 +1,19 @@
+meta {
+  name: Get video key
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/impartus/video/:ttid/key
+  body: none
+  auth: inherit
+}
+
+params:path {
+  ttid: 9472540
+}
+
+docs {
+  Returns the (normalized) decryption key for the AES-128 cipher for the m3u8 files served by impartus.
+}

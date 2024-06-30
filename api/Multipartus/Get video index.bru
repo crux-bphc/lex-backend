@@ -1,0 +1,15 @@
+meta {
+  name: Get video index
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/impartus/video/:ttid/m3u8
+  body: none
+  auth: inherit
+}
+
+params:path {
+  ttid: 9472540
+}

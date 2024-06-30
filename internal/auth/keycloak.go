@@ -72,7 +72,7 @@ func Middleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		token, err := getBearerToken(ctx)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
 			})
 			return
