@@ -2,8 +2,6 @@ services:
   db:
     image: surrealdb/surrealdb:latest
     user: root
-    ports:
-      - ${DB_PORT}:8000
     entrypoint: 
       - /surreal
       - start
@@ -12,6 +10,8 @@ services:
       - $DB_USER
       - --pass
       - $DB_PASSWORD
+      - --bind
+      - 0.0.0.0:$DB_PORT
       - --allow-all
       - file:database.db
     healthcheck:
