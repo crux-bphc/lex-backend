@@ -23,5 +23,3 @@ services:
     extends:
       file: compose.base.yml
       service: db
-    ports:
-      - ${DB_PORT}:${DB_PORT}

@@ -16,7 +16,7 @@ var Repository *impartusRepository
 
 func init() {
 
-	db, err := surrealdb.New(fmt.Sprintf("ws://db:%s/rpc", os.Getenv("DB_PORT")))
+	db, err := surrealdb.New("ws://db:8000/rpc")
 	if err != nil {
 		log.Fatalln(err)
 	}

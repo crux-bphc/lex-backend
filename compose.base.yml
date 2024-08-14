@@ -10,12 +10,10 @@ services:
       - $DB_USER
       - --pass
       - $DB_PASSWORD
-      - --bind
-      - 0.0.0.0:$DB_PORT
       - --allow-all
       - file:database.db
     healthcheck:
-      test: ["CMD", "/surreal", "isready", "-e", "http://localhost:$DB_PORT"]
+      test: ["CMD", "/surreal", "isready"]
       interval: 1m
       start_interval: 4s
       start_period: 10s
@@ -26,7 +24,7 @@ services:
       - /surreal
       - import
       - --endpoint
-      - http://db:$DB_PORT
+      - http://db:8000
       - --user
       - $DB_USER
       - --pass
@@ -49,7 +47,7 @@ services:
       - /surreal
       - sql
       - --endpoint
-      - http://db:$DB_PORT
+      - http://db:8000
       - --user
       - $DB_USER
       - --pass
