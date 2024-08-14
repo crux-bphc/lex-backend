@@ -2,6 +2,8 @@ services:
   db:
     image: surrealdb/surrealdb:latest
     user: root
+    ports:
+      - ${DB_PORT}:8000
     entrypoint: 
       - /surreal
       - start
@@ -24,7 +26,7 @@ services:
       - /surreal
       - import
       - --endpoint
-      - http://db:8000
+      - http://db:$DB_PORT
       - --user
       - $DB_USER
       - --pass
@@ -47,7 +49,7 @@ services:
       - /surreal
       - sql
       - --endpoint
-      - http://db:8000
+      - http://db:$DB_PORT
       - --user
       - $DB_USER
       - --pass
