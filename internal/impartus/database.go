@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 	"time"
-
+	"fmt"
 	"github.com/surrealdb/surrealdb.go"
 )
 
@@ -16,7 +16,7 @@ var Repository *impartusRepository
 
 func init() {
 
-	db, err := surrealdb.New("ws://db:8000/rpc")
+	db, err := surrealdb.New(fmt.Sprintf("ws://db:%s/rpc", os.Getenv("DB_PORT")))
 	if err != nil {
 		log.Fatalln(err)
 	}
