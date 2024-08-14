@@ -15,7 +15,7 @@ services:
       - --allow-all
       - file:database.db
     healthcheck:
-      test: ["CMD", "/surreal", "isready"]
+      test: ["CMD", "/surreal", "isready", "-e", "http://localhost:$DB_PORT"]
       interval: 1m
       start_interval: 4s
       start_period: 10s
