@@ -13,8 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterImpartusRoutes(router *gin.Engine) {
-	r := router.Group("/impartus")
+func RegisterImpartusRoutes(base *gin.RouterGroup) {
+	r := base.Group("/impartus")
 
 	authorized := r.Group("/")
 	authorized.Use(auth.Middleware())

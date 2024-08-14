@@ -16,14 +16,15 @@ func main() {
 	router.Use(location.Default())
 	router.Use(stats.RequestStats())
 
-	router.GET("/stats", func(ctx *gin.Context) {
+	base := router.Group("/api")
+	base.GET("/stats", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, stats.Report())
 	})
 
 	router.SetTrustedProxies(nil)
 
-	routes.RegisterImpartusRoutes(router)
-	routes.RegisterUserRoutes(router)
+	routes.RegisterImpartusRoutes(base)
+	routes.RegisterUserRoutes(base)
 
 	router.Run(":3000")
 }

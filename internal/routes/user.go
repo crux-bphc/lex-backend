@@ -5,8 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterUserRoutes(router *gin.Engine) {
-	r := router.Group("/user")
+func RegisterUserRoutes(base *gin.RouterGroup) {
+	r := base.Group("/user")
 
 	r.Use(auth.Middleware())
 
