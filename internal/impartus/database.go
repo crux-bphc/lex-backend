@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"time"
-	"fmt"
 	"github.com/surrealdb/surrealdb.go"
 )
 
