@@ -24,4 +24,3 @@ services:
     extends:
       file: compose.base.yml
       service: db
-    
