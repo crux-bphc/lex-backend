@@ -60,6 +60,8 @@ DEFINE EVENT token_updated ON user
 // Defines the course independently of the session or subject id.
 DEFINE TABLE subject SCHEMAFULL;
 // id field is of the form `[department (eg: CS,ECE), subject_code (eg, F211)]`
+DEFINE FIELD department ON subject TYPE string;
+DEFINE FIELD code ON subject TYPE string;
 DEFINE FIELD name ON subject TYPE string;
 
 -- define the lectures table
@@ -89,6 +91,8 @@ DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
 
         // Insert the subjects
         UPDATE subject:[$department, $subject_code] CONTENT {
+            department: $department,
+            code: $subject_code,
             name: $subject_name
         } RETURN NONE;
 

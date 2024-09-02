@@ -128,6 +128,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	// Returns a list of all the valid lecture sections for the particular subject
 	r.GET("/subject/:department/:code", func(ctx *gin.Context) {
+		// CS/ECE/EEE/INSTR becomes CS,ECE,EEE,INSTR in the URL
 		department := strings.ReplaceAll(ctx.Param("department"), ",", "/")
 
 		subjectCode := ctx.Param("code")
@@ -204,7 +205,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	r.DELETE("/user/subjects", modifyPinnedSubjects)
 
 	// Returns a list of videos from the lecture using a registered user's impartus jwt token
-	r.GET("/lecture/:sessionId/:subjectId/", func(ctx *gin.Context) {
+	r.GET("/lecture/:sessionId/:subjectId", func(ctx *gin.Context) {
 		sessionId := ctx.Param("sessionId")
 		subjectId := ctx.Param("subjectId")
 		lectureId := fmt.Sprintf("lecture:[%s,%s]", sessionId, subjectId)

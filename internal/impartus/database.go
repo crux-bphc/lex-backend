@@ -49,6 +49,8 @@ type User struct {
 type Subject struct {
 	surrealdb.Basemodel `table:"subject"`
 	ID                  string `json:"id,omitempty"`
+	Department          string `json:"department,omitempty"`
+	Code                string `json:"code,omitempty"`
 	Name                string `json:"name,omitempty"`
 }
 
