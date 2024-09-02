@@ -1,0 +1,35 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: 
+  body: none
+  auth: oauth2
+}
+
+auth:oauth2 {
+  grant_type: authorization_code
+  callback_url: http://localhost:7000
+  authorization_url: https://auth.crux-bphc.com/realms/CRUx/protocol/openid-connect/auth
+  access_token_url: https://auth.crux-bphc.com/realms/CRUx/protocol/openid-connect/token
+  client_id: lex
+  client_secret: 
+  scope: profile
+  state: 
+  pkce: false
+}
+
+vars:post-response {
+  jwtToken: res.body.access_token
+}
+
+docs {
+  Fetches the JWT access token from keycloak to login to lex and sets it as the Bearer token for all the requests in the collection.
+  
+  1. Click on the *Auth* tab for this request.
+  2. Click `Get Access Token`
+  3. Done
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Get lectures
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/impartus/subject/:department/:subjectCode
+  body: none
+  auth: inherit
+}
+
+params:path {
+  subjectCode: F241
+  department: CS,ECE,EEE,INSTR
+}
+
+docs {
+  Returns the list of lecture sections (including for different years/sessions). 
+}
