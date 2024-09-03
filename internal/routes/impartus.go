@@ -65,6 +65,28 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	r.GET("/user", func(ctx *gin.Context) {
 		// TODO: return a bunch of user info such as number of pinned subjects etc
 		// also return if user currently has a valid impartus jwt
+
+		claims := auth.GetClaims(ctx)
+		registered, err := surrealdb.SmartUnmarshal[bool](
+			impartus.Repository.DB.Query(
+				"SELECT VALUE count(email = $email) == 1 FROM ONLY user LIMIT 1",
+				map[string]interface{}{
+					"email": claims.EMail,
+				},
+			),
+		)
+
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"registered": registered,
+			// TODO: add number of subjects/lectures added to database to response
+		})
 	})
 
 	// Creates a new entry for the user in the database.
