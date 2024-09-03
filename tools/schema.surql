@@ -68,6 +68,8 @@ DEFINE FIELD name ON subject TYPE string;
 // Defines the lectures across various years and lecture sections.
 DEFINE TABLE lecture SCHEMAFULL;
 // id field is of the form `[session_id (defines which sem the course was taken), subject_id]`
+DEFINE FIELD impartus_session ON lecture TYPE int;
+DEFINE FIELD impartus_subject ON lecture TYPE int;
 DEFINE FIELD subject ON lecture TYPE record<subject>;
 DEFINE FIELD section ON lecture TYPE int;
 DEFINE FIELD professor ON lecture TYPE string;
@@ -97,7 +99,9 @@ DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
         } RETURN NONE;
 
         // Insert the lectures
-        UPDATE lecture:[$lecture.sessionId, $lecture.subjectId] SET 
+        UPDATE lecture:[$lecture.sessionId, $lecture.subjectId] SET
+            impartus_session = <int> $lecture.sessionId,
+            impartus_subject = <int> $lecture.subjectId,
             subject = subject:[$department, $subject_code],
             section = <int> string::slice($lecture.subjectName, -1, 1),
             professor = string::trim($lecture.professorName),

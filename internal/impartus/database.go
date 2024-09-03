@@ -57,6 +57,8 @@ type Subject struct {
 type Lecture struct {
 	surrealdb.Basemodel `table:"lecture"`
 	ID                  string   `json:"id,omitempty"`
+	ImpartusSession     int      `json:"impartus_session,omitempty"`
+	ImpartusSubject     int      `json:"impartus_subject,omitempty"`
 	Section             int      `json:"section,omitempty"`
 	Professor           string   `json:"professor,omitempty"`
 	Users               []string `json:"-"`
