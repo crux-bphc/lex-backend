@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -53,6 +54,15 @@ func impartusValidJwtMiddleware() gin.HandlerFunc {
 func getImpartusJwtForUser(ctx *gin.Context) string {
 	token, _ := ctx.Get("IMPARTUS_JWT")
 	return token.(string)
+}
+
+// Map of impartus session id as key and a tuple of [year, sem] as value
+var impartusSessionMap = map[int][2]int{
+	1426: {2024, 1},
+	1369: {2023, 2},
+	1339: {2023, 1},
+	1275: {2022, 2},
+	1249: {2022, 1},
 }
 
 func RegisterImpartusRoutes(router *gin.Engine) {
@@ -132,6 +142,17 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			"message": "Registered",
 			// TODO: add number of subjects/lectures added to database to response
 		})
+	})
+
+	// Returns a map of available session ids as [year, sem]
+	r.GET("/session", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, impartusSessionMap)
+	})
+
+	// Returns a tuple of a specific session id as [year, sem]
+	r.GET("/session/:id", func(ctx *gin.Context) {
+		sessionId, _ := strconv.Atoi(ctx.Param("id"))
+		ctx.JSON(http.StatusOK, impartusSessionMap[sessionId])
 	})
 
 	r.GET("/subject", func(ctx *gin.Context) {
