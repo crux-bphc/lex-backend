@@ -79,7 +79,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		claims := auth.GetClaims(ctx)
 		registered, err := surrealdb.SmartUnmarshal[bool](
 			impartus.Repository.DB.Query(
-				"SELECT VALUE count(email = $email) == 1 FROM ONLY user LIMIT 1",
+				"count(SELECT id FROM user WHERE email = $email) == 1",
 				map[string]interface{}{
 					"email": claims.EMail,
 				},
