@@ -1,0 +1,16 @@
+meta {
+  name: Add pinned subjects
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/impartus/user/subjects?department=BITS&code=F110
+  body: none
+  auth: inherit
+}
+
+params:query {
+  department: BITS
+  code: F110
+}
