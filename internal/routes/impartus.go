@@ -14,6 +14,7 @@ import (
 	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
 	"github.com/surrealdb/surrealdb.go"
+	"github.com/surrealdb/surrealdb.go/pkg/models"
 )
 
 // ensures that the user accessing multipartus is still using the same password
@@ -21,13 +22,12 @@ import (
 func impartusValidJwtMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		claims := auth.GetClaims(ctx)
-		impartusJwt, err := surrealdb.SmartUnmarshal[string](
-			impartus.Repository.DB.Query(
-				"SELECT VALUE fn::get_token(id) FROM ONLY user WHERE email = $email LIMIT 1",
-				map[string]interface{}{
-					"email": claims.EMail,
-				},
-			),
+		impartusJwtResult, err := surrealdb.Query[string](
+			impartus.Repository.DB,
+			"SELECT VALUE fn::get_token(id) FROM ONLY user WHERE email = $email LIMIT 1",
+			map[string]interface{}{
+				"email": claims.EMail,
+			},
 		)
 
 		if err != nil {
@@ -36,6 +36,8 @@ func impartusValidJwtMiddleware() gin.HandlerFunc {
 			})
 			return
 		}
+
+		impartusJwt := (*impartusJwtResult)[0].Result
 
 		if len(impartusJwt) == 0 {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
@@ -77,13 +79,12 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		// also return if user currently has a valid impartus jwt
 
 		claims := auth.GetClaims(ctx)
-		registered, err := surrealdb.SmartUnmarshal[bool](
-			impartus.Repository.DB.Query(
-				"count(SELECT id FROM user WHERE email = $email) == 1",
-				map[string]interface{}{
-					"email": claims.EMail,
-				},
-			),
+		registered, err := surrealdb.Query[bool](
+			impartus.Repository.DB,
+			"count(SELECT id FROM user WHERE email = $email) == 1",
+			map[string]interface{}{
+				"email": claims.EMail,
+			},
 		)
 
 		if err != nil {
@@ -94,7 +95,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"registered": registered,
+			"registered": (*registered)[0].Result,
 			// TODO: add number of subjects/lectures added to database to response
 		})
 	})
@@ -130,10 +131,11 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		// create user in database
-		_, err = impartus.Repository.DB.Create("user", user)
+		_, err = surrealdb.Create[surrealdb.Result[impartus.User]](impartus.Repository.DB, models.Table("user"), user)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "user-create-error",
 			})
 			return
 		}
@@ -176,9 +178,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		subjectCode := ctx.Param("code")
 
-		subjectId := fmt.Sprintf("subject:['%s','%s']", department, subjectCode)
-
-		lectures, err := impartus.Repository.GetLectures(subjectId)
+		lectures, err := impartus.Repository.GetLectures(department, subjectCode)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
@@ -206,27 +206,26 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	modifyPinnedSubjects := func(ctx *gin.Context) {
 		claims := auth.GetClaims(ctx)
 
-		subjectId := ctx.Query("id")
-		if len(subjectId) == 0 {
+		department := ctx.Query("department")
+		code := ctx.Query("code")
+		if len(department)+len(code) == 0 {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"message": "please provide a valid 'id' parameter for your subject",
+				"message": "please provide a valid 'department' and 'code' parameter for your subject",
 			})
 			return
 		}
 
 		var err error
+		vars := map[string]interface{}{
+			"email":   claims.EMail,
+			"subject": models.RecordID{Table: "subject", ID: []string{department, code}},
+		}
 
 		switch ctx.Request.Method {
 		case http.MethodPost:
-			_, err = impartus.Repository.DB.Query(`LET $user = (SELECT VALUE id FROM user WHERE email = $email);RELATE ONLY $user->pinned->$subjectId`, map[string]interface{}{
-				"email":     claims.EMail,
-				"subjectId": subjectId,
-			})
+			_, err = surrealdb.Query[any](impartus.Repository.DB, "LET $user = (SELECT VALUE id FROM user WHERE email = $email);RELATE ONLY $user->pinned->$subject", vars)
 		case http.MethodDelete:
-			_, err = impartus.Repository.DB.Query(`LET $user = (SELECT VALUE id FROM user WHERE email = $email);DELETE $user->bought WHERE out=$subjectId`, map[string]interface{}{
-				"email":     claims.EMail,
-				"subjectId": subjectId,
-			})
+			_, err = surrealdb.Query[any](impartus.Repository.DB, "LET $user = (SELECT VALUE id FROM user WHERE email = $email);DELETE $user->pinned WHERE out=$subject", vars)
 		}
 
 		if err != nil {
@@ -237,7 +236,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("action on %s successful", subjectId),
+			"message": fmt.Sprintf("action on %s %s successful", department, code),
 		})
 	}
 
@@ -249,11 +248,10 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	// Returns a list of videos from the lecture using a registered user's impartus jwt token
 	r.GET("/lecture/:sessionId/:subjectId", func(ctx *gin.Context) {
-		sessionId := ctx.Param("sessionId")
-		subjectId := ctx.Param("subjectId")
-		lectureId := fmt.Sprintf("lecture:[%s,%s]", sessionId, subjectId)
+		sessionId, _ := strconv.Atoi(ctx.Param("sessionId"))
+		subjectId, _ := strconv.Atoi(ctx.Param("subjectId"))
 
-		impartusToken, err := impartus.Repository.GetLectureToken(lectureId)
+		impartusToken, err := impartus.Repository.GetLectureToken(sessionId, subjectId)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
