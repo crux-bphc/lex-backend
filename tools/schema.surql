@@ -76,7 +76,10 @@ DEFINE FIELD professor ON lecture TYPE string;
 DEFINE FIELD users ON lecture TYPE set<record<user>>;
 
 -- define the pinned lectures table
-DEFINE TABLE pinned TYPE RELATION FROM user TO subject;
+DEFINE TABLE pinned TYPE RELATION FROM user TO subject ENFORCED;
+DEFINE INDEX unique_relationships
+    ON TABLE pinned
+    COLUMNS in, out UNIQUE;
 
 // Used to extract the registered lectures and add it to the global dataset
 DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
@@ -92,14 +95,14 @@ DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
         let $subject_name = array::join(array::slice($name_array, 2, -1), " ");
 
         // Insert the subjects
-        UPDATE subject:[$department, $subject_code] CONTENT {
+        UPSERT subject:[$department, $subject_code] CONTENT {
             department: $department,
             code: $subject_code,
             name: $subject_name
         } RETURN NONE;
 
         // Insert the lectures
-        UPDATE lecture:[$lecture.sessionId, $lecture.subjectId] SET
+        UPSERT lecture:[<int> $lecture.sessionId, <int> $lecture.subjectId] SET
             impartus_session = <int> $lecture.sessionId,
             impartus_subject = <int> $lecture.subjectId,
             subject = subject:[$department, $subject_code],

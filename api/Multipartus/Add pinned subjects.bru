@@ -1,0 +1,18 @@
+meta {
+  name: Add pinned subjects
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/impartus/user/subjects
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "department": "BITS",
+    "code": "F110"
+  }
+}

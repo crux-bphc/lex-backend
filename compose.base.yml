@@ -1,17 +1,16 @@
 services:
   db:
-    image: surrealdb/surrealdb:latest
+    image: surrealdb/surrealdb:v2.0
     user: root
     entrypoint: 
       - /surreal
       - start
-      - --auth
       - --user
       - $DB_USER
       - --pass
       - $DB_PASSWORD
       - --allow-all
-      - file:database.db
+      - rocksdb:database.db
     healthcheck:
       test: ["CMD", "/surreal", "isready"]
       interval: 1m
@@ -19,7 +18,7 @@ services:
       start_period: 10s
 
   migrate:
-    image: surrealdb/surrealdb:latest
+    image: surrealdb/surrealdb:v2.0
     entrypoint:
       - /surreal
       - import
@@ -42,7 +41,7 @@ services:
       - ./tools/schema.surql:/extras/schema.surql:ro
 
   sql:
-    image: surrealdb/surrealdb:latest
+    image: surrealdb/surrealdb:v2.0
     entrypoint:
       - /surreal
       - sql

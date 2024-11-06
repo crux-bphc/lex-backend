@@ -86,8 +86,8 @@ func (client *ImpartusClient) GetSubjects(token string) ([]byte, error) {
 }
 
 // Gets a list of video from impartus for that specific subject and session
-func (client *ImpartusClient) GetVideos(token, subjectId, sessionId string) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/subjects/%s/lectures/%s", client.BaseUrl, subjectId, sessionId), nil)
+func (client *ImpartusClient) GetVideos(token string, subjectId, sessionId int) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/subjects/%d/lectures/%d", client.BaseUrl, subjectId, sessionId), nil)
 	if err != nil {
 		return nil, err
 	}
