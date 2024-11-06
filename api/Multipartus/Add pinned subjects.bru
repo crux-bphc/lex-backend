@@ -4,13 +4,15 @@ meta {
   seq: 5
 }
 
-delete {
-  url: {{baseUrl}}/impartus/user/subjects?department=BITS&code=F110
-  body: none
+post {
+  url: {{baseUrl}}/impartus/user/subjects
+  body: json
   auth: inherit
 }
 
-params:query {
-  department: BITS
-  code: F110
+body:json {
+  {
+    "department": "BITS",
+    "code": "F110"
+  }
 }

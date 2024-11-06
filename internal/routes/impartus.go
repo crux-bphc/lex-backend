@@ -113,9 +113,10 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			Password string `json:"password" binding:"required"`
 		}{}
 
-		if err := ctx.BindJSON(&body); err != nil {
+		if err := ctx.ShouldBindJSON(&body); err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
+				"code":    "invalid-body",
 			})
 			return
 		}
@@ -221,12 +222,14 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	modifyPinnedSubjects := func(ctx *gin.Context) {
 		claims := auth.GetClaims(ctx)
 
-		department := ctx.Query("department")
-		code := ctx.Query("code")
-		if len(department)+len(code) == 0 {
+		body := struct {
+			Department string `json:"department" binding:"required"`
+			Code       string `json:"code" binding:"required"`
+		}{}
+		if err := ctx.ShouldBindJSON(&body); err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"message": "please provide a valid 'department' and 'code' parameter for your subject",
-				"code":    "invalid-params",
+				"message": err.Error(),
+				"code":    "invalid-body",
 			})
 			return
 		}
@@ -234,7 +237,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		var err error
 		vars := map[string]interface{}{
 			"user":    models.RecordID{Table: "user", ID: claims.EMail},
-			"subject": models.RecordID{Table: "subject", ID: []string{department, code}},
+			"subject": models.RecordID{Table: "subject", ID: []string{body.Department, body.Code}},
 		}
 
 		switch ctx.Request.Method {
@@ -253,7 +256,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("action on %s %s successful", department, code),
+			"message": fmt.Sprintf("action on %s %s successful", body.Department, body.Code),
 		})
 	}
 
