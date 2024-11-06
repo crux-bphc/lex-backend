@@ -90,6 +90,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "db-query",
 			})
 			return
 		}
@@ -119,11 +120,16 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
+				"code":    "get-token",
 			})
 			return
 		}
 
 		user := impartus.User{
+			ID: &models.RecordID{
+				Table: "user",
+				ID:    claims.EMail,
+			},
 			EMail:     claims.EMail,
 			Password:  body.Password,
 			Jwt:       impartusToken,
@@ -135,7 +141,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
-				"code":    "user-create-error",
+				"code":    "db-create",
 			})
 			return
 		}
@@ -164,6 +170,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "get-subjects",
 			})
 			return
 		}
@@ -182,6 +189,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "get-lectures",
 			})
 			return
 		}
@@ -196,6 +204,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "get-pinned-subjects",
 			})
 			return
 		}
@@ -211,6 +220,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if len(department)+len(code) == 0 {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"message": "please provide a valid 'department' and 'code' parameter for your subject",
+				"code":    "invalid-params",
 			})
 			return
 		}
@@ -231,6 +241,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "db-query",
 			})
 			return
 		}
@@ -255,6 +266,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "get-lecture-token",
 			})
 			return
 		}
@@ -263,6 +275,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "get-videos",
 			})
 			return
 		}
@@ -279,6 +292,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "get-decryption-key",
 			})
 			return
 		}
@@ -301,6 +315,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "get-index-m3u8",
 			})
 			return
 		}
@@ -323,6 +338,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "get-m3u8-chunk",
 			})
 			return
 		}
