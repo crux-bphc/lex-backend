@@ -24,9 +24,12 @@ func impartusValidJwtMiddleware() gin.HandlerFunc {
 		claims := auth.GetClaims(ctx)
 		impartusJwtResult, err := surrealdb.Query[string](
 			impartus.Repository.DB,
-			"SELECT VALUE fn::get_token(id) FROM ONLY user WHERE email = $email LIMIT 1",
+			"RETURN fn::get_token($user)",
 			map[string]interface{}{
-				"email": claims.EMail,
+				"user": models.RecordID{
+					Table: "user",
+					ID:    claims.EMail,
+				},
 			},
 		)
 
@@ -81,9 +84,12 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		claims := auth.GetClaims(ctx)
 		registered, err := surrealdb.Query[bool](
 			impartus.Repository.DB,
-			"count(SELECT id FROM user WHERE email = $email) == 1",
+			"RETURN record::exists($user)",
 			map[string]interface{}{
-				"email": claims.EMail,
+				"user": models.RecordID{
+					Table: "user",
+					ID:    claims.EMail,
+				},
 			},
 		)
 
@@ -227,15 +233,15 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		var err error
 		vars := map[string]interface{}{
-			"email":   claims.EMail,
+			"user":    models.RecordID{Table: "user", ID: claims.EMail},
 			"subject": models.RecordID{Table: "subject", ID: []string{department, code}},
 		}
 
 		switch ctx.Request.Method {
 		case http.MethodPost:
-			_, err = surrealdb.Query[any](impartus.Repository.DB, "LET $user = (SELECT VALUE id FROM user WHERE email = $email);RELATE ONLY $user->pinned->$subject", vars)
+			_, err = surrealdb.Query[any](impartus.Repository.DB, "RELATE ONLY $user->pinned->$subject", vars)
 		case http.MethodDelete:
-			_, err = surrealdb.Query[any](impartus.Repository.DB, "LET $user = (SELECT VALUE id FROM user WHERE email = $email);DELETE $user->pinned WHERE out=$subject", vars)
+			_, err = surrealdb.Query[any](impartus.Repository.DB, "DELETE $user->pinned WHERE out=$subject", vars)
 		}
 
 		if err != nil {

@@ -72,8 +72,8 @@ func (repo *impartusRepository) GetSubjects() ([]Subject, error) {
 func (repo *impartusRepository) GetPinnedSubjects(email string) ([]Subject, error) {
 	res, err := surrealdb.Query[[]Subject](
 		repo.DB,
-		"SELECT * from subject where <-pinned<-(user where email = $email)",
-		map[string]interface{}{"email": email},
+		"SELECT * from $user->pinned->subject",
+		map[string]interface{}{"user": models.RecordID{Table: "user", ID: email}},
 	)
 	if err != nil {
 		return nil, err
