@@ -12,7 +12,9 @@ import (
 
 func main() {
 	router := gin.Default()
-	router.Use(cors.Default())
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins: true,
+	}))
 	router.Use(location.Default())
 	router.Use(stats.RequestStats())
 
