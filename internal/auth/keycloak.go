@@ -47,7 +47,7 @@ func getBearerToken(ctx *gin.Context) (string, error) {
 	return authHeaderArray[1], nil
 }
 
-func parseToken(jwtToken string) (*UserClaims, error) {
+func ParseToken(jwtToken string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(jwtToken, &UserClaims{}, jwks.Keyfunc)
 
 	// Parse the JWT.
@@ -79,7 +79,7 @@ func Middleware() gin.HandlerFunc {
 			return
 		}
 
-		claims, err := parseToken(token)
+		claims, err := ParseToken(token)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"message": err.Error(),
