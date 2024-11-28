@@ -70,13 +70,19 @@ func parseToken(jwtToken string) (*UserClaims, error) {
 
 func Middleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		token, err := getBearerToken(ctx)
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-				"code":    "get-bearer-token",
-			})
-			return
+		var token string
+
+		// Use the url query if available, otherwise use the auth header
+		if token = ctx.Query("bearer"); len(token) == 0 {
+			var err error
+			token, err = getBearerToken(ctx)
+			if err != nil {
+				ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+					"message": err.Error(),
+					"code":    "get-bearer-token",
+				})
+				return
+			}
 		}
 
 		claims, err := parseToken(token)
