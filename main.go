@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"net/url"
+	"os"
 
 	"github.com/crux-bphc/lex/internal/routes"
 	"github.com/gin-contrib/cors"
@@ -17,7 +20,26 @@ func main() {
 		AllowAllOrigins: true,
 		AllowHeaders:    []string{"*"},
 	}))
-	router.Use(location.Default())
+
+	var locationMiddleware gin.HandlerFunc
+
+	if baseUri := os.Getenv("BASE_URI"); len(baseUri) > 0 {
+		u, err := url.Parse(baseUri)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		locationMiddleware = location.New(location.Config{
+			Scheme: u.Scheme,
+			Host:   u.Host,
+			Base:   u.Path,
+		})
+	} else {
+		locationMiddleware = location.Default()
+	}
+
+	router.Use(locationMiddleware)
+
 	router.Use(stats.RequestStats())
 
 	router.GET("/stats", func(ctx *gin.Context) {
