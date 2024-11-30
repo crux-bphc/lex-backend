@@ -13,7 +13,9 @@ import (
 func main() {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
+		// TODO(release): need to properly configure these before release
 		AllowAllOrigins: true,
+		AllowHeaders:    []string{"*"},
 	}))
 	router.Use(location.Default())
 	router.Use(stats.RequestStats())
