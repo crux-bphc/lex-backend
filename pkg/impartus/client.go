@@ -3,6 +3,7 @@ package pkg
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -47,6 +48,10 @@ func (client *ImpartusClient) GetToken(username, password string) (string, error
 
 	if err := json.Unmarshal(data, &responseBody); err != nil {
 		return "", err
+	}
+
+	if len(responseBody.Token) == 0 {
+		return "", errors.New("failed to retrieve a token, probably because of wrong password")
 	}
 
 	return responseBody.Token, nil
