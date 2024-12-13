@@ -82,9 +82,12 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		// also return if user currently has a valid impartus jwt
 
 		claims := auth.GetClaims(ctx)
-		registered, err := surrealdb.Query[bool](
+		registered, err := surrealdb.Query[struct {
+			Registered bool `json:"registered"`
+			Valid      bool `json:"valid"`
+		}](
 			impartus.Repository.DB,
-			"RETURN record::exists($user)",
+			"SELECT record::exists(type::record(id)) AS registered, type::is::string(fn::get_token(type::record(id))) AS valid FROM ONLY $user",
 			map[string]interface{}{
 				"user": models.RecordID{
 					Table: "user",
@@ -101,10 +104,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"registered": (*registered)[0].Result,
-			// TODO: add number of subjects/lectures added to database to response
-		})
+		ctx.JSON(http.StatusOK, (*registered)[0].Result)
 	})
 
 	// Creates a new entry for the user in the database.
