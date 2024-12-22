@@ -144,7 +144,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		// create user in database
-		_, err = surrealdb.Create[surrealdb.Result[impartus.User]](impartus.Repository.DB, models.Table("user"), user)
+		_, err = surrealdb.Create[impartus.User](impartus.Repository.DB, models.Table("user"), user)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
