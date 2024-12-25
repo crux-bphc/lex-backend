@@ -1,6 +1,6 @@
 services:
   db:
-    image: surrealdb/surrealdb:v2.0
+    image: surrealdb/surrealdb:v2.1.4
     user: root
     entrypoint: 
       - /surreal
@@ -18,7 +18,7 @@ services:
       start_period: 10s
 
   migrate:
-    image: surrealdb/surrealdb:v2.0
+    image: surrealdb/surrealdb:v2.1.4
     entrypoint:
       - /surreal
       - import
@@ -41,7 +41,7 @@ services:
       - ./tools/schema.surql:/extras/schema.surql:ro
 
   sql:
-    image: surrealdb/surrealdb:v2.0
+    image: surrealdb/surrealdb:v2.1.4
     entrypoint:
       - /surreal
       - sql
