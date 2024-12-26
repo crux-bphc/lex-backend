@@ -81,6 +81,28 @@ DEFINE INDEX unique_relationships
     ON TABLE pinned
     COLUMNS in, out UNIQUE;
 
+// Checks if the lecture name contains all the information needed by lex
+DEFINE FUNCTION OVERWRITE fn::extra::check_lecture_name($name: string) {
+    let $name_array = string::words($name);
+    IF array::len($name_array) <= 3 {
+        RETURN false;
+    };
+
+    let $subject_code = array::at($name_array, 1);
+    // subject code should be of the form CXXX (like F123)
+    IF !(string::is::alpha(string::slice($subject_code, 0, 1)) && 
+        string::is::numeric(string::slice($subject_code, 1))) {
+        RETURN false;
+    };
+
+    let $lecture_section = string::slice(array::at($name_array, -1), 1);
+    IF !string::is::numeric($lecture_section) {
+        RETURN false;
+    };
+
+    RETURN true;
+};
+
 // Used to extract the registered lectures and add it to the global dataset
 DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
     let $impartus_jwt = fn::get_token($user);
@@ -94,27 +116,16 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
     });
 
     FOR $lecture IN $lectures {
+        IF !fn::extra::check_lecture_name($lecture.subjectName) {
+            CONTINUE;
+        };
+
+        // should be like ["BITS", "F111", "SIGMA", "BOY", "L1"]
         let $name_array = string::words($lecture.subjectName);
 
-        IF array::len($name_array) <= 3 {
-            CONTINUE;
-        };
-
-        // like "CS", "ECE"...
         let $department = array::at($name_array, 0);
-
         let $subject_code = array::at($name_array, 1);
-        // subject code should be of the form CXXX (like F123)
-        IF !(string::is::alpha(string::slice($subject_code, 0, 1)) && 
-            string::is::numeric(string::slice($subject_code, 1))) {
-            CONTINUE;
-        };
-
-
-        let $lecture_section = string::slice(array::at($name_array, -1), 1);
-        IF !string::is::numeric($lecture_section) {
-            CONTINUE;
-        };
+        let $lecture_section = type::int(string::slice(array::at($name_array, -1), 1));
 
         // contains just the subject name, like "OPERATING SYSTEMS"
         let $subject_name = array::join(array::slice($name_array, 2, -1), " ");
@@ -137,7 +148,7 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
                 impartus_session: $impartus_session,
                 impartus_subject: $impartus_subject,
                 subject: subject:[$department, $subject_code],
-                section: type::int($lecture_section),
+                section: $lecture_section,
                 professor: string::trim($lecture.professorName),
                 users: [$user]
             };
@@ -161,15 +172,13 @@ DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>) {
     // this session id is for the one the student is currently part of
     let $latest_session = $lectures[0].sessionId;
     FOR $lecture IN $lectures[WHERE sessionId = $latest_session] {
-        let $name_array = string::words($lecture.subjectName);
-        let $department = array::at($name_array, 0);
-
-        let $subject_code = array::at($name_array, 1);
-        // subject code should be of the form CXXX (like F123)
-        IF !(string::is::alpha(string::slice($subject_code, 0, 1)) && 
-            string::is::numeric(string::slice($subject_code, 1))) {
+        IF !fn::extra::check_lecture_name($lecture.subjectName) {
             CONTINUE;
         };
+
+        let $name_array = string::words($lecture.subjectName);
+        let $department = array::at($name_array, 0);
+        let $subject_code = array::at($name_array, 1);
 
         RELATE $user->pinned->subject:[$department, $subject_code] RETURN NONE;
     };
