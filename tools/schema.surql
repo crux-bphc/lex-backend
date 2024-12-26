@@ -17,13 +17,13 @@ DEFINE FIELD updated_at ON user TYPE datetime DEFAULT time::now();
 
 DEFINE INDEX userEmailIndex ON TABLE user COLUMNS email UNIQUE;
 
-DEFINE FUNCTION fn::get_token($user: record<user>) {
+DEFINE FUNCTION OVERWRITE fn::get_token($user: record<user>) {
     // return none if the last password fetch attempt failed
-    IF (type::is::none($user.jwt)) THEN
+    IF type::is::none($user.jwt) {
         RETURN NONE;
-    END;
+    };
 
-    IF (time::now() - $user.updated_at > 6d) THEN
+    IF (time::now() - $user.updated_at > 6d) {
         UPDATE ONLY $user SET jwt = function() {
             const response = await fetch("https://bitshyd.impartus.com/api/auth/signin", {
                 method: "POST",
@@ -43,17 +43,17 @@ DEFINE FUNCTION fn::get_token($user: record<user>) {
             const data = await response.json();
             return data.token;
         };
-    END;
+    };
     
     RETURN $user.jwt;
 };
 
-// 
+// update timestamp when the jwt field has been changed
 DEFINE EVENT token_updated ON user 
     WHEN (($before.jwt != $after.jwt) && $event = "UPDATE") 
     THEN 
 {
-    UPDATE ONLY $value.id SET updated_at = time::now();
+    UPDATE ONLY $value SET updated_at = time::now();
 };
 
 -- define the subjects table
@@ -82,42 +82,78 @@ DEFINE INDEX unique_relationships
     COLUMNS in, out UNIQUE;
 
 // Used to extract the registered lectures and add it to the global dataset
-DEFINE FUNCTION fn::extract_lectures($user: record<user>) {
+DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
     let $impartus_jwt = fn::get_token($user);
+    IF type::is::none($impartus_jwt) {
+        THROW "can't get user's impartus jwt";
+    };
+
     let $lectures = http::get("https://bitshyd.impartus.com/api/subjects", {
-        'Authorization': string::concat("Bearer ", $impartus_jwt)
+        "Authorization": string::concat("Bearer ", $impartus_jwt),
+        "user-agent": "axios"
     });
 
     FOR $lecture IN $lectures {
         let $name_array = string::words($lecture.subjectName);
+
+        IF array::len($name_array) <= 3 {
+            CONTINUE;
+        };
+
+        // like "CS", "ECE"...
         let $department = array::at($name_array, 0);
+
         let $subject_code = array::at($name_array, 1);
+        // subject code should be of the form CXXX (like F123)
+        IF !(string::is::alpha(string::slice($subject_code, 0, 1)) && 
+            string::is::numeric(string::slice($subject_code, 1))) {
+            CONTINUE;
+        };
+
+
+        let $lecture_section = string::slice(array::at($name_array, -1), 1);
+        IF !string::is::numeric($lecture_section) {
+            CONTINUE;
+        };
+
+        // contains just the subject name, like "OPERATING SYSTEMS"
         let $subject_name = array::join(array::slice($name_array, 2, -1), " ");
 
-        // Insert the subjects
+        // Create the subjects
         UPSERT subject:[$department, $subject_code] CONTENT {
             department: $department,
             code: $subject_code,
             name: $subject_name
-        } RETURN NONE;
+        };
 
-        // Insert the lectures
-        UPSERT lecture:[<int> $lecture.sessionId, <int> $lecture.subjectId] SET
-            impartus_session = <int> $lecture.sessionId,
-            impartus_subject = <int> $lecture.subjectId,
-            subject = subject:[$department, $subject_code],
-            section = <int> string::slice($lecture.subjectName, -1, 1),
-            professor = string::trim($lecture.professorName),
-            users += $user
-        RETURN NONE;
+        let $impartus_session = type::int($lecture.sessionId);
+        let $impartus_subject = type::int($lecture.subjectId);
+
+        // create a lecture and add user registered to lecture
+        IF record::exists(lecture:[$impartus_session, $impartus_subject]) {
+            UPDATE lecture:[$impartus_session, $impartus_subject] SET users += $user;
+        } ELSE {
+            CREATE lecture:[$impartus_session, $impartus_subject] CONTENT {
+                impartus_session: $impartus_session,
+                impartus_subject: $impartus_subject,
+                subject: subject:[$department, $subject_code],
+                section: type::int($lecture_section),
+                professor: string::trim($lecture.professorName),
+                users: [$user]
+            };
+        };
     };
 
     RETURN NONE;
 };
 
 // Used to pin the registered subjects of the latest session 
-DEFINE FUNCTION fn::pin_registered($user: record<user>) {
+DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>) {
     let $impartus_jwt = fn::get_token($user);
+    IF type::is::none($impartus_jwt) {
+        THROW "can't get user's impartus jwt";
+    };
+    
     let $lectures = http::get("https://bitshyd.impartus.com/api/subjects", {
         'Authorization': string::concat("Bearer ", $impartus_jwt)
     });
@@ -127,23 +163,16 @@ DEFINE FUNCTION fn::pin_registered($user: record<user>) {
     FOR $lecture IN $lectures[WHERE sessionId = $latest_session] {
         let $name_array = string::words($lecture.subjectName);
         let $department = array::at($name_array, 0);
+
         let $subject_code = array::at($name_array, 1);
+        // subject code should be of the form CXXX (like F123)
+        IF !(string::is::alpha(string::slice($subject_code, 0, 1)) && 
+            string::is::numeric(string::slice($subject_code, 1))) {
+            CONTINUE;
+        };
 
         RELATE $user->pinned->subject:[$department, $subject_code] RETURN NONE;
     };
 
     RETURN NONE;
-};
-
-
-DEFINE EVENT extract_on_create ON user 
-    WHEN ($event = "CREATE" && type::is::string($value.jwt)) 
-    THEN 
-{
-
-    // Add the registered lectures of the user to the database
-    let $extracted_lectures = fn::extract_lectures($value.id);
-
-    // Pin the registed of the newly created user by default when they register
-    let $pinned_subjects = fn::pin_registered($value.id)
 };
