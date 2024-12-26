@@ -87,7 +87,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			Valid      bool `json:"valid"`
 		}](
 			impartus.Repository.DB,
-			"SELECT record::exists(type::record(id)) AS registered, type::is::string(fn::get_token(type::record(id))) AS valid FROM ONLY $user",
+			"RETURN {registered: record::exists($user), valid: type::is::string(fn::get_token($user))}",
 			map[string]interface{}{
 				"user": models.RecordID{
 					Table: "user",
@@ -144,11 +144,33 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		// create user in database
-		_, err = surrealdb.Create[impartus.User](impartus.Repository.DB, models.Table("user"), user)
+		_, err = surrealdb.Create[any](impartus.Repository.DB, models.Table("user"), user)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "db-create",
+			})
+			return
+		}
+
+		_, err = surrealdb.Query[any](impartus.Repository.DB, "fn::extract_lectures($user)", map[string]interface{}{
+			"user": (*user.ID),
+		})
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "extract-lectures",
+			})
+			return
+		}
+
+		_, err = surrealdb.Query[any](impartus.Repository.DB, "fn::pin_registered($user)", map[string]interface{}{
+			"user": (*user.ID),
+		})
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "pin-lectures",
 			})
 			return
 		}

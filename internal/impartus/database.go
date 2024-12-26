@@ -17,7 +17,6 @@ type impartusRepository struct {
 var Repository *impartusRepository
 
 func init() {
-
 	db, err := surrealdb.New("ws://db:8000/rpc")
 	if err != nil {
 		log.Fatalln(err)
@@ -73,7 +72,9 @@ func (repo *impartusRepository) GetPinnedSubjects(email string) ([]Subject, erro
 	res, err := surrealdb.Query[[]Subject](
 		repo.DB,
 		"SELECT * from $user->pinned->subject",
-		map[string]interface{}{"user": models.RecordID{Table: "user", ID: email}},
+		map[string]interface{}{
+			"user": models.RecordID{Table: "user", ID: email},
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -86,7 +87,9 @@ func (repo *impartusRepository) GetLectures(deparment, subjectCode string) ([]Le
 	res, err := surrealdb.Query[[]Lecture](
 		repo.DB,
 		"SELECT * FROM lecture WHERE subject = $subject",
-		map[string]interface{}{"subject": models.RecordID{Table: "subject", ID: []string{deparment, subjectCode}}},
+		map[string]interface{}{
+			"subject": models.RecordID{Table: "subject", ID: []string{deparment, subjectCode}},
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -98,7 +101,9 @@ func (repo *impartusRepository) GetLectures(deparment, subjectCode string) ([]Le
 func (repo *impartusRepository) GetLectureToken(sessionId, subjectId int) (string, error) {
 	res, err := surrealdb.Query[string](repo.DB,
 		"array::first((SELECT VALUE fn::get_token(id) from $lecture.users)[WHERE !type::is::none($this)])",
-		map[string]interface{}{"lecture": models.RecordID{Table: "lecture", ID: []int{sessionId, subjectId}}},
+		map[string]interface{}{
+			"lecture": models.RecordID{Table: "lecture", ID: []int{sessionId, subjectId}},
+		},
 	)
 
 	if err != nil {
