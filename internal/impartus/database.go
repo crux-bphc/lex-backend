@@ -62,9 +62,15 @@ type Lecture struct {
 }
 
 // TODO: add ability to search for and filter lectures
-func (repo *impartusRepository) GetSubjects() ([]Subject, error) {
-	res, err := surrealdb.Select[[]Subject](repo.DB, models.Table("subject"))
-	return (*res), err
+func (repo *impartusRepository) GetSubjects(query string) ([]Subject, error) {
+	res, err := surrealdb.Query[[]Subject](
+		repo.DB,
+		"SELECT * from subject WHERE name @@ $query",
+		map[string]interface{}{
+			"query": query,
+		},
+	)
+	return (*res)[0].Result, err
 }
 
 // Get the list of subjects that are pinned by the user
