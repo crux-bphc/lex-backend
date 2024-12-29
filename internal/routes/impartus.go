@@ -192,10 +192,10 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ctx.JSON(http.StatusOK, impartusSessionMap[sessionId])
 	})
 
-	r.GET("/subject", func(ctx *gin.Context) {
-		// TODO: subject search endpoint
-		// for now it just returns all the subjects
-		subjects, err := impartus.Repository.GetSubjects()
+	r.GET("/subject/search", func(ctx *gin.Context) {
+		query := ctx.Query("q")
+
+		subjects, err := impartus.Repository.GetSubjects(query)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
