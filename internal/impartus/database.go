@@ -65,7 +65,8 @@ type Lecture struct {
 func (repo *impartusRepository) GetSubjects(query string) ([]Subject, error) {
 	res, err := surrealdb.Query[[]Subject](
 		repo.DB,
-		"SELECT * from subject WHERE name @@ $query",
+		`SELECT *, search::score(1) as search_score OMIT search_score 
+		FROM subject WHERE name @1@ $query ORDER BY score DESC LIMIT 15`,
 		map[string]interface{}{
 			"query": query,
 		},
