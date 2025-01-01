@@ -186,5 +186,5 @@ DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>) {
     RETURN NONE;
 };
 
-DEFINE ANALYZER OVERWRITE subject_analyzer TOKENIZERS blank FILTERS ascii,lowercase,edgengram(3,10);
+DEFINE ANALYZER OVERWRITE subject_analyzer TOKENIZERS blank FILTERS ascii,lowercase,edgengram(2,10);
 DEFINE INDEX OVERWRITE subject_search ON subject FIELDS name,department,code SEARCH ANALYZER subject_analyzer BM25;
