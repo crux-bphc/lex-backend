@@ -15,11 +15,13 @@ import (
 
 func main() {
 	router := gin.Default()
-	router.Use(cors.New(cors.Config{
-		// TODO(release): need to properly configure these before release
-		AllowAllOrigins: true,
-		AllowHeaders:    []string{"*"},
-	}))
+
+	// TODO(release): need to properly configure these before release
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowHeaders = []string{"*"}
+
+	router.Use(cors.New(corsConfig))
 
 	var locationMiddleware gin.HandlerFunc
 
