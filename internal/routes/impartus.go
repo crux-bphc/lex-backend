@@ -390,7 +390,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/video/$1/key"`, hostUrl)
+		decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/ttid/$1/key"`, hostUrl)
 		data = cipherUriRegex.ReplaceAll(data, []byte(decryptionKeyUrl))
 		ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 	})
