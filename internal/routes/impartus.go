@@ -314,8 +314,24 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ctx.Data(http.StatusOK, "application/json", data)
 	})
 
+	authorized.GET("/video/:videoId/info", func(ctx *gin.Context) {
+		videoId := ctx.Param("videoId")
+		token := getImpartusJwtForUser(ctx)
+
+		data, err := impartus.Client.GetVideoInfo(token, videoId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-video-info",
+			})
+			return
+		}
+
+		ctx.Data(http.StatusOK, "application/json", data)
+	})
+
 	// Returns the decryption key for the particular video without an Authorization header
-	authorized.GET("/video/:ttid/key", func(ctx *gin.Context) {
+	authorized.GET("/ttid/:ttid/key", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
 		token := getImpartusJwtForUser(ctx)
 
@@ -336,7 +352,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	m3u8Regex := regexp.MustCompile("http.*inm3u8=(.*)")
 
 	// Gets a video stream
-	authorized.GET("/video/:ttid/m3u8", func(ctx *gin.Context) {
+	authorized.GET("/ttid/:ttid/m3u8", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
 		token := getImpartusJwtForUser(ctx)
 

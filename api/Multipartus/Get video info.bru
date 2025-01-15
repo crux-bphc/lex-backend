@@ -1,17 +1,17 @@
 meta {
-  name: Get video key
+  name: Get video info
   type: http
-  seq: 9
+  seq: 12
 }
 
 get {
-  url: {{baseUrl}}/impartus/ttid/:ttid/key
+  url: {{baseUrl}}/impartus/video/:videoId/info
   body: none
   auth: inherit
 }
 
 params:path {
-  ttid: 9472540
+  videoId: 6629998
 }
 
 docs {

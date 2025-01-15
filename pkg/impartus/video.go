@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,6 +24,28 @@ func (client *ImpartusClient) GetVideos(token string, subjectId, sessionId int) 
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	return io.ReadAll(resp.Body)
+}
+
+func (client *ImpartusClient) GetVideoInfo(token, videoId string) ([]byte, error) {
+	videoUrl := fmt.Sprintf("%s/videos/params/id/%s", client.BaseUrl, videoId)
+	req, err := http.NewRequest(http.MethodGet, videoUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("user-agent", fakeuseragent.RandomUserAgent())
+
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("request error code: " + resp.Status)
+	}
 
 	return io.ReadAll(resp.Body)
 }
