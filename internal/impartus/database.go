@@ -89,21 +89,6 @@ func (repo *impartusRepository) GetPinnedSubjects(email string) ([]Subject, erro
 	return (*res)[0].Result, nil
 }
 
-// Get all lecture sections corresponding to a particular subject
-func (repo *impartusRepository) GetLectures(deparment, subjectCode string) ([]Lecture, error) {
-	res, err := surrealdb.Query[[]Lecture](
-		repo.DB,
-		"SELECT * FROM lecture WHERE subject = $subject",
-		map[string]interface{}{
-			"subject": models.RecordID{Table: "subject", ID: []string{deparment, subjectCode}},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return (*res)[0].Result, nil
-}
-
 // Get a valid impartus jwt token of a user who is registered to the lecture
 func (repo *impartusRepository) GetLectureToken(sessionId, subjectId int) (string, error) {
 	res, err := surrealdb.Query[string](repo.DB,

@@ -214,7 +214,17 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 		subjectCode := ctx.Param("code")
 
-		lectures, err := impartus.Repository.GetLectures(department, subjectCode)
+		data, err := surrealdb.Query[struct {
+			Subject  impartus.Subject   `json:"subject,omitempty"`
+			Lectures []impartus.Lecture `json:"lectures,omitempty"`
+		}](
+			impartus.Repository.DB,
+			"SELECT (SELECT * FROM ONLY $parent) as subject, (SELECT * OMIT users FROM lecture WHERE subject = $parent.id) as lectures FROM ONLY $subject",
+			map[string]interface{}{
+				"subject": models.RecordID{Table: "subject", ID: []string{department, subjectCode}},
+			},
+		)
+
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
@@ -223,7 +233,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, lectures)
+		ctx.JSON(http.StatusOK, (*data)[0].Result)
 	})
 
 	// Returns the list of subjects the user has pinned
