@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -324,11 +325,78 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ctx.Data(http.StatusOK, "application/json", data)
 	})
 
+	// Returns video info based on videoId
 	authorized.GET("/video/:videoId/info", func(ctx *gin.Context) {
 		videoId := ctx.Param("videoId")
 		token := getImpartusJwtForUser(ctx)
 
 		data, err := impartus.Client.GetVideoInfo(token, videoId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-video-info",
+			})
+			return
+		}
+
+		ctx.Data(http.StatusOK, "application/json", data)
+	})
+
+	// Returns list of slide image urls for the given videoId
+	authorized.GET("/video/:videoId/slides", func(ctx *gin.Context) {
+		videoId := ctx.Param("videoId")
+		token := getImpartusJwtForUser(ctx)
+
+		data, err := impartus.Client.GetVideoInfo(token, videoId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-video-info",
+			})
+			return
+		}
+
+		var rawSlidesData struct {
+			Slides []struct {
+				StartPoint int    `json:"timepoint"`
+				EndPoint   int    `json:"end_point"`
+				FileID     string `json:"fileid"`
+				EmbedID    int    `json:"embed_id"`
+				SlideID    int    `json:"slideId"`
+			} `json:"slides"`
+		}
+
+		if err := json.Unmarshal(data, &rawSlidesData); err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "unmarshal-error",
+			})
+			return
+		}
+
+		slides := make([]struct {
+			ID    int    `json:"id"`
+			Url   string `json:"url"`
+			Start int    `json:"start"`
+			End   int    `json:"end"`
+		}, len(rawSlidesData.Slides))
+
+		for i, slide := range rawSlidesData.Slides {
+			slides[i].ID = slide.SlideID
+			slides[i].Start = slide.StartPoint
+			slides[i].End = slide.EndPoint
+			slides[i].Url = fmt.Sprintf("%s/download1/embedded/%s/img_%d.png", strings.TrimSuffix(impartus.Client.BaseUrl, "/api"), slide.FileID, slide.EmbedID)
+		}
+
+		ctx.JSON(http.StatusOK, slides)
+	})
+
+	// Returns video info based on ttid
+	authorized.GET("/ttid/:ttid/info", func(ctx *gin.Context) {
+		ttid := ctx.Param("ttid")
+		token := getImpartusJwtForUser(ctx)
+
+		data, err := impartus.Client.GetTTIDInfo(token, ttid)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),

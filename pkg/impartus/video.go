@@ -50,6 +50,28 @@ func (client *ImpartusClient) GetVideoInfo(token, videoId string) ([]byte, error
 	return io.ReadAll(resp.Body)
 }
 
+func (client *ImpartusClient) GetTTIDInfo(token, ttid string) ([]byte, error) {
+	videoUrl := fmt.Sprintf("%s/lectures/%s/info", client.BaseUrl, ttid)
+	req, err := http.NewRequest(http.MethodGet, videoUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("user-agent", fakeuseragent.RandomUserAgent())
+
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("request error code: " + resp.Status)
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
 // Get the main m3u8 file containing videos with different resolutions
 func (client *ImpartusClient) GetIndexM3U8(token, ttid string) ([]byte, error) {
 	lectureUrl := fmt.Sprintf("%s/fetchvideo?type=index.m3u8&ttid=%s&token=%s", client.BaseUrl, ttid, token)
