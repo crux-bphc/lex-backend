@@ -342,12 +342,43 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ctx.Data(http.StatusOK, "application/json", data)
 	})
 
-	// Returns list of slide image urls for the given videoId
-	authorized.GET("/video/:videoId/slides", func(ctx *gin.Context) {
-		videoId := ctx.Param("videoId")
+	// Returns list of slide image urls for the given ttid
+	authorized.GET("/ttid/:ttid/slides", func(ctx *gin.Context) {
+		ttid := ctx.Param("ttid")
 		token := getImpartusJwtForUser(ctx)
 
-		data, err := impartus.Client.GetVideoInfo(token, videoId)
+		data, err := impartus.Client.GetTTIDInfo(token, ttid)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-ttid-info",
+			})
+			return
+		}
+
+		var rawData struct {
+			SessionId int `json:"sessionId"`
+			SubjectId int `json:"subjectId"`
+			VideoId   int `json:"videoId"`
+		}
+		if err := json.Unmarshal(data, &rawData); err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "unmarshal-ttid-data",
+			})
+			return
+		}
+
+		impartusToken, err := impartus.Repository.GetLectureToken(rawData.SessionId, rawData.SubjectId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-lecture-token",
+			})
+			return
+		}
+
+		data, err = impartus.Client.GetVideoInfo(impartusToken, strconv.Itoa(rawData.VideoId))
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
@@ -369,7 +400,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		if err := json.Unmarshal(data, &rawSlidesData); err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
-				"code":    "unmarshal-error",
+				"code":    "unmarshal-slides-data",
 			})
 			return
 		}
