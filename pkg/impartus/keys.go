@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,6 +25,9 @@ func (client *ImpartusClient) GetDecryptionKey(token, ttid string) ([]byte, erro
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("invalid status code: " + resp.Status)
+	}
 
 	return io.ReadAll(resp.Body)
 }

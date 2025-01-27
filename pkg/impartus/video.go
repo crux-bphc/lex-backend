@@ -24,6 +24,9 @@ func (client *ImpartusClient) GetVideos(token string, subjectId, sessionId int) 
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("invalid status code: " + resp.Status)
+	}
 
 	return io.ReadAll(resp.Body)
 }
@@ -44,7 +47,7 @@ func (client *ImpartusClient) GetVideoInfo(token, videoId string) ([]byte, error
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("request error code: " + resp.Status)
+		return nil, errors.New("invalid status code: " + resp.Status)
 	}
 
 	return io.ReadAll(resp.Body)
@@ -66,7 +69,7 @@ func (client *ImpartusClient) GetTTIDInfo(token, ttid string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("request error code: " + resp.Status)
+		return nil, errors.New("invalid status code: " + resp.Status)
 	}
 
 	return io.ReadAll(resp.Body)
@@ -87,6 +90,9 @@ func (client *ImpartusClient) GetIndexM3U8(token, ttid string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("invalid status code: " + resp.Status)
+	}
 
 	return io.ReadAll(resp.Body)
 }
@@ -106,6 +112,9 @@ func (client *ImpartusClient) GetM3U8Chunk(token, m3u8 string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("invalid status code: " + resp.Status)
+	}
 
 	// the raw m3u8 from impartus
 	return io.ReadAll(resp.Body)

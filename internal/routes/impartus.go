@@ -129,6 +129,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
 				"code":    "get-token",
+				"cause":   "impartus",
 			})
 			return
 		}
@@ -318,6 +319,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "get-videos",
+				"cause":   "impartus",
 			})
 			return
 		}
@@ -335,6 +337,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "get-video-info",
+				"cause":   "impartus",
 			})
 			return
 		}
@@ -352,6 +355,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "get-ttid-info",
+				"cause":   "impartus",
 			})
 			return
 		}
@@ -383,6 +387,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "get-video-info",
+				"cause":   "impartus",
 			})
 			return
 		}
@@ -432,6 +437,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "get-video-info",
+				"cause":   "impartus",
 			})
 			return
 		}
@@ -449,6 +455,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "get-decryption-key",
+				"cause":   "impartus",
 			})
 			return
 		}
@@ -472,6 +479,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "get-index-m3u8",
+				"cause":   "impartus",
 			})
 			return
 		}
@@ -495,6 +503,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "get-m3u8-chunk",
+				"cause":   "impartus",
 			})
 			return
 		}
