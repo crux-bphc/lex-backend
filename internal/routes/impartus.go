@@ -64,6 +64,7 @@ func getImpartusJwtForUser(ctx *gin.Context) string {
 
 // Map of impartus session id as key and a tuple of [year, sem] as value
 var impartusSessionMap = map[int][2]int{
+	1456: {2024, 2},
 	1426: {2024, 1},
 	1369: {2023, 2},
 	1339: {2023, 1},
