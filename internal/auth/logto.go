@@ -17,12 +17,11 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 	// TODO: add more user attributes
 	EMail string `json:"email"`
-	// BITS_ID string `json:"bits_id"`
 }
 
 func init() {
-	// The JWKS for keycloak
-	URL := "https://auth.crux-bphc.com/realms/CRUx/protocol/openid-connect/certs"
+	// The JWKS for logto
+	URL := "https://logto.local.crux-bphc.com/oidc/jwks"
 
 	var err error
 	jwks, err = keyfunc.NewDefault([]string{URL})

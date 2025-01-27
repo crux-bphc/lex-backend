@@ -13,21 +13,21 @@ post {
 auth:oauth2 {
   grant_type: authorization_code
   callback_url: http://localhost:7000
-  authorization_url: https://auth.crux-bphc.com/realms/CRUx/protocol/openid-connect/auth
-  access_token_url: https://auth.crux-bphc.com/realms/CRUx/protocol/openid-connect/token
-  client_id: lex
+  authorization_url: https://logto.local.crux-bphc.com/oidc/auth
+  access_token_url: https://logto.local.crux-bphc.com/oidc/token
+  client_id: k8fhucay2ilpaj2rtkrii
   client_secret: 
-  scope: profile
+  scope: openid profile email
   state: 
-  pkce: false
+  pkce: true
 }
 
 vars:post-response {
-  jwtToken: res.body.access_token
+  jwtToken: res.body.id_token
 }
 
 docs {
-  Fetches the JWT access token from keycloak to login to lex and sets it as the Bearer token for all the requests in the collection.
+  Fetches the JWT id token from logto to login to lex and sets it as the Bearer token for all the requests in the collection.
   
   1. Click on the *Auth* tab for this request.
   2. Click `Get Access Token`
