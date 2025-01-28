@@ -9,7 +9,6 @@ services:
       - 'SURREAL_USER=${SURREAL_USER:-root}'
       - 'SURREAL_PASS=${SURREAL_PASS:-root}'
       - 'BACKEND_PORT=${BACKEND_PORT:-3000}'
-      - 'BASE_URI=${BASE_URI}'
     ports:
         - ${BACKEND_PORT}:3000
     depends_on:
@@ -21,8 +20,7 @@ services:
       file: compose.base.yml
       service: db
     volumes:
-      - type: bind
-        source: ./store/database.db
-        target: /database.db
-        is_directory: true
+      - database:/database.db
 
+volumes:
+  database:
