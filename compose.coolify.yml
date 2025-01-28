@@ -5,8 +5,8 @@ services:
       dockerfile: Containerfile
     environment:
       # Set defaults and specify variables here for coolify to pick up
-      - 'SURREAL_USER=${SERVICE_USER_APP}'
-      - 'SURREAL_PASS=${SERVICE_PASSWORD_APP}'
+      - 'SURREAL_USER=${SERVICE_USER_DB}'
+      - 'SURREAL_PASS=${SERVICE_PASSWORD_DB}'
       - 'PUBLIC_URI=${PUBLIC_URI:-https://lex.local.crux-bphc.com}'
       - 'CORS_ORIGINS=${CORS_ORIGINS:-*}'
     depends_on:
@@ -17,6 +17,9 @@ services:
     extends:
       file: compose.base.yml
       service: db
+    environment:
+      - 'SURREAL_USER=${SERVICE_USER_DB}'
+      - 'SURREAL_PASS=${SERVICE_PASSWORD_DB}'
     volumes:
       - database:/database.db
 
