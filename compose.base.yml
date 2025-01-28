@@ -7,10 +7,6 @@ services:
       - start
       - --import-file
       - /extras/schema.surql
-      - --user
-      - $DB_USER
-      - --pass
-      - $DB_PASSWORD
       - --allow-all
       - rocksdb:/database.db
     healthcheck:
@@ -20,6 +16,7 @@ services:
       start_period: 10s
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
+    env_file: .env
 
   migrate:
     image: surrealdb/surrealdb:v2.1.4
@@ -28,10 +25,6 @@ services:
       - import
       - --endpoint
       - http://db:8000
-      - --user
-      - $DB_USER
-      - --pass
-      - $DB_PASSWORD
       - --ns
       - lex
       - --db
@@ -39,6 +32,7 @@ services:
       - /extras/schema.surql
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
+    env_file: .env
 
   sql:
     image: surrealdb/surrealdb:v2.1.4
@@ -47,11 +41,8 @@ services:
       - sql
       - --endpoint
       - http://db:8000
-      - --user
-      - $DB_USER
-      - --pass
-      - $DB_PASSWORD
       - --ns
       - lex
       - --db
       - playground
+    env_file: .env

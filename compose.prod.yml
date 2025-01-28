@@ -4,8 +4,14 @@ services:
       context: .
       dockerfile: Containerfile
     env_file: .env
+    environment:
+      # Set defaults and specify variables here for coolify to pick up
+      - 'SURREAL_USER=${SURREAL_USER:-root}'
+      - 'SURREAL_PASS=${SURREAL_PASS:-root}'
+      - 'BACKEND_PORT=${BACKEND_PORT:-3000}'
+      - 'BASE_URI=${BASE_URI}'
     ports:
-      - ${BACKEND_PORT:-3000}:3000
+        - ${BACKEND_PORT}:3000
     depends_on:
       db:
         condition: service_healthy

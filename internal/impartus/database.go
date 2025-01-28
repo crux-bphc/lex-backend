@@ -23,8 +23,8 @@ func init() {
 	}
 
 	if _, err = db.SignIn(&surrealdb.Auth{
-		Username: os.Getenv("DB_USER"),
-		Password: os.Getenv("DB_PASSWORD"),
+		Username: os.Getenv("SURREAL_USER"),
+		Password: os.Getenv("SURREAL_PASS"),
 	}); err != nil {
 		log.Fatalln(err)
 
