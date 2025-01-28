@@ -10,14 +10,12 @@ services:
       - --pass
       - $DB_PASSWORD
       - --allow-all
-      - rocksdb:database.db
+      - rocksdb:/database.db
     healthcheck:
       test: ["CMD", "/surreal", "isready"]
       interval: 1m
       start_interval: 4s
       start_period: 10s
-    volumes:
-      - ./data:/mydata
 
   migrate:
     image: surrealdb/surrealdb:v2.1.4

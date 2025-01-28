@@ -23,4 +23,7 @@ go.work
 # Temporary directory
 tmp
 
+# persistent docker volumes
+store/
+
 .env

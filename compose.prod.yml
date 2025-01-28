@@ -24,3 +24,9 @@ services:
     extends:
       file: compose.base.yml
       service: db
+    volumes:
+      - type: bind
+        source: ./store/database.db
+        target: /database.db
+        is_directory: true
+
