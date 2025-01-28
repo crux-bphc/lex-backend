@@ -9,6 +9,7 @@ services:
       - 'SURREAL_USER=${SURREAL_USER:-root}'
       - 'SURREAL_PASS=${SURREAL_PASS:-root}'
       - 'BACKEND_PORT=${BACKEND_PORT:-3000}'
+      - 'PUBLIC_URI=${PUBLIC_URI:-https://lex.local.crux-bphc.com}'
     ports:
         - ${BACKEND_PORT}:3000
     depends_on:

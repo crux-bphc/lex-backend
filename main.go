@@ -25,7 +25,7 @@ func main() {
 
 	var locationMiddleware gin.HandlerFunc
 
-	if baseUri := os.Getenv("BASE_URI"); len(baseUri) > 0 {
+	if baseUri := os.Getenv("PUBLIC_URI"); len(baseUri) > 0 {
 		u, err := url.Parse(baseUri)
 		if err != nil {
 			log.Fatalln(err)
