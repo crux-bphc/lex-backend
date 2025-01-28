@@ -30,7 +30,7 @@ func init() {
 
 	}
 
-	if err = db.Use(os.Getenv("DB_NAMESPACE"), "impartus"); err != nil {
+	if err = db.Use("lex", "impartus"); err != nil {
 		log.Fatalln(err)
 	}
 

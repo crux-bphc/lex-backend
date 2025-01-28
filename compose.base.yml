@@ -2,9 +2,11 @@ services:
   db:
     image: surrealdb/surrealdb:v2.1.4
     user: root
-    entrypoint: 
+    entrypoint:
       - /surreal
       - start
+      - --import-file
+      - /extras/schema.surql
       - --user
       - $DB_USER
       - --pass
@@ -16,6 +18,8 @@ services:
       interval: 1m
       start_interval: 4s
       start_period: 10s
+    volumes:
+      - ./tools/schema.surql:/extras/schema.surql:ro
 
   migrate:
     image: surrealdb/surrealdb:v2.1.4
@@ -29,14 +33,10 @@ services:
       - --pass
       - $DB_PASSWORD
       - --ns
-      - $DB_NAMESPACE
+      - lex
       - --db
       - playground
       - /extras/schema.surql
-    # Commented out because it causes the db container to be recreated
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
 
@@ -52,10 +52,6 @@ services:
       - --pass
       - $DB_PASSWORD
       - --ns
-      - $DB_NAMESPACE
+      - lex
       - --db
       - playground
-    # Commented out because it causes the db container to be recreated
-    # depends_on:
-    #   db:
-    #     condition: service_healthy

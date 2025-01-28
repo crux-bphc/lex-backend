@@ -2,6 +2,8 @@
 // need to find a better way to do this
 REMOVE NAMESPACE IF EXISTS lex_test;
 
+USE NS lex;
+
 -- ------
 -- IMPARTUS
 -- ------

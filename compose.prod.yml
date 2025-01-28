@@ -3,19 +3,9 @@ services:
     build:
       context: .
       dockerfile: Containerfile
+    env_file: .env
     ports:
       - ${BACKEND_PORT:-3000}:3000
-    depends_on:
-      db:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-    env_file: .env
-
-  migrate:
-    extends:
-      file: compose.base.yml
-      service: migrate
     depends_on:
       db:
         condition: service_healthy
