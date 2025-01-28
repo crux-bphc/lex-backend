@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/crux-bphc/lex/internal/routes"
 	"github.com/gin-contrib/cors"
@@ -16,10 +18,17 @@ import (
 func main() {
 	router := gin.Default()
 
-	// TODO(release): need to properly configure these before release
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
-	corsConfig.AllowHeaders = []string{"*"}
+	corsConfig := cors.Config{
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"*"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}
+	if allowedOrigins := os.Getenv("CORS_ORIGINS"); len(allowedOrigins) > 0 {
+		corsConfig.AllowOrigins = strings.Split(allowedOrigins, ",")
+	} else {
+		corsConfig.AllowAllOrigins = true
+	}
 
 	router.Use(cors.New(corsConfig))
 
