@@ -16,4 +16,5 @@ services:
       file: compose.base.yml
       service: db
     ports:
-      - "8000:8000"
+      - ${DATABASE_PORT}:8000
+    env_file: .env

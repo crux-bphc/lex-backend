@@ -1,10 +1,10 @@
+# Compose specifically for hosting on coolify
 services:
   app:
     build:
       context: .
       dockerfile: Containerfile
     environment:
-      # Set defaults and specify variables here for coolify to pick up
       - 'SURREAL_USER=${SERVICE_USER_DB}'
       - 'SURREAL_PASS=${SERVICE_PASSWORD_DB}'
       - 'PUBLIC_URI=${PUBLIC_URI:-https://lex.local.crux-bphc.com}'

@@ -19,7 +19,6 @@ services:
       start_period: 10s
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
-    env_file: .env
 
   migrate:
     image: surrealdb/surrealdb:v2.1.4
