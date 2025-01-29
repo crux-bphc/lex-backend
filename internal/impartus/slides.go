@@ -10,7 +10,8 @@ import (
 
 func WriteImagesToPDF(imageUrls []string, writer io.Writer) (int64, error) {
 	pdf := gopdf.GoPdf{}
-	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4Landscape})
+	pageSize := gopdf.Rect{W: 800, H: 450}
+	pdf.Start(gopdf.Config{PageSize: pageSize})
 	httpClient := &http.Client{}
 	for _, imageUrl := range imageUrls {
 		req, err := http.NewRequest(http.MethodGet, imageUrl, nil)
