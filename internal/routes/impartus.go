@@ -386,46 +386,14 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		data, err = impartus.Client.GetVideoInfo(impartusToken, strconv.Itoa(rawData.VideoId))
+		slides, err := impartus.Client.GetSlides(impartusToken, strconv.Itoa(rawData.VideoId))
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
-				"code":    "get-video-info",
+				"code":    "get-slides",
 				"cause":   "impartus",
 			})
 			return
-		}
-
-		var rawSlidesData struct {
-			Slides []struct {
-				StartPoint int    `json:"timepoint"`
-				EndPoint   int    `json:"end_point"`
-				FileID     string `json:"fileid"`
-				EmbedID    int    `json:"embed_id"`
-				SlideID    int    `json:"slideId"`
-			} `json:"slides"`
-		}
-
-		if err := json.Unmarshal(data, &rawSlidesData); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"message": err.Error(),
-				"code":    "unmarshal-slides-data",
-			})
-			return
-		}
-
-		slides := make([]struct {
-			ID    int    `json:"id"`
-			Url   string `json:"url"`
-			Start int    `json:"start"`
-			End   int    `json:"end"`
-		}, len(rawSlidesData.Slides))
-
-		for i, slide := range rawSlidesData.Slides {
-			slides[i].ID = slide.SlideID
-			slides[i].Start = slide.StartPoint
-			slides[i].End = slide.EndPoint
-			slides[i].Url = fmt.Sprintf("%s/download1/embedded/%s/img_%d.png", strings.TrimSuffix(impartus.Client.BaseUrl, "/api"), slide.FileID, slide.EmbedID)
 		}
 
 		ctx.JSON(http.StatusOK, slides)
