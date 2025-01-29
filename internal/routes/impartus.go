@@ -454,6 +454,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ctx.Header("Content-Type", "application/pdf")
 		_, err = impartus.WriteImagesToPDF(imageUrls, ctx.Writer)
 		if err != nil {
+			ctx.Header("Content-Type", "application/json")
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "convert-images-to-pdf",
