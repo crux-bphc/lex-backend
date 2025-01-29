@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/impartus/ttid/:ttid/slides
+  url: {{baseUrl}}/impartus/ttid/:ttid/slides/download
   body: none
   auth: inherit
 }
@@ -15,5 +15,5 @@ params:path {
 }
 
 docs {
-  Returns the (normalized) decryption key for the AES-128 cipher for the m3u8 files served by impartus.
+  Downloads slides for the video with specified ttid.
 }
