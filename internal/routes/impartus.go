@@ -386,49 +386,81 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		data, err = impartus.Client.GetVideoInfo(impartusToken, strconv.Itoa(rawData.VideoId))
+		slides, err := impartus.Client.GetSlides(impartusToken, strconv.Itoa(rawData.VideoId))
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
-				"code":    "get-video-info",
+				"code":    "get-slides",
 				"cause":   "impartus",
 			})
 			return
 		}
 
-		var rawSlidesData struct {
-			Slides []struct {
-				StartPoint int    `json:"timepoint"`
-				EndPoint   int    `json:"end_point"`
-				FileID     string `json:"fileid"`
-				EmbedID    int    `json:"embed_id"`
-				SlideID    int    `json:"slideId"`
-			} `json:"slides"`
-		}
+		ctx.JSON(http.StatusOK, slides)
+	})
 
-		if err := json.Unmarshal(data, &rawSlidesData); err != nil {
+	authorized.GET("/ttid/:ttid/slides/download", func(ctx *gin.Context) {
+		ttid := ctx.Param("ttid")
+		token := getImpartusJwtForUser(ctx)
+
+		data, err := impartus.Client.GetTTIDInfo(token, ttid)
+		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
-				"code":    "unmarshal-slides-data",
+				"code":    "get-ttid-info",
+				"cause":   "impartus",
 			})
 			return
 		}
 
-		slides := make([]struct {
-			ID    int    `json:"id"`
-			Url   string `json:"url"`
-			Start int    `json:"start"`
-			End   int    `json:"end"`
-		}, len(rawSlidesData.Slides))
-
-		for i, slide := range rawSlidesData.Slides {
-			slides[i].ID = slide.SlideID
-			slides[i].Start = slide.StartPoint
-			slides[i].End = slide.EndPoint
-			slides[i].Url = fmt.Sprintf("%s/download1/embedded/%s/img_%d.png", strings.TrimSuffix(impartus.Client.BaseUrl, "/api"), slide.FileID, slide.EmbedID)
+		var rawData struct {
+			SubjectName string `json:"subjectName"`
+			SessionId   int    `json:"sessionId"`
+			SubjectId   int    `json:"subjectId"`
+			VideoId     int    `json:"videoId"`
+		}
+		if err := json.Unmarshal(data, &rawData); err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "unmarshal-ttid-data",
+			})
+			return
 		}
 
-		ctx.JSON(http.StatusOK, slides)
+		impartusToken, err := impartus.Repository.GetLectureToken(rawData.SessionId, rawData.SubjectId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-lecture-token",
+			})
+			return
+		}
+
+		slides, err := impartus.Client.GetSlides(impartusToken, strconv.Itoa(rawData.VideoId))
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-slides",
+				"cause":   "impartus",
+			})
+			return
+		}
+
+		imageUrls := make([]string, len(slides))
+		for i, slide := range slides {
+			imageUrls[i] = slide.Url
+		}
+
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.pdf", rawData.SubjectName))
+		_, err = impartus.WriteImagesToPDF(imageUrls, ctx.Writer)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "convert-images-to-pdf",
+			})
+			return
+		}
+
 	})
 
 	// Returns video info based on ttid
