@@ -156,7 +156,8 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		_, err = surrealdb.Query[any](impartus.Repository.DB, "fn::extract_lectures($user)", map[string]interface{}{
+		// no of total lectures the user is registered to
+		lectures, err := surrealdb.Query[int](impartus.Repository.DB, "fn::extract_lectures($user)", map[string]interface{}{
 			"user": (*user.ID),
 		})
 		if err != nil {
@@ -167,7 +168,8 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		_, err = surrealdb.Query[any](impartus.Repository.DB, "fn::pin_registered($user)", map[string]interface{}{
+		// no of pinned subjects of the user
+		pinned, err := surrealdb.Query[int](impartus.Repository.DB, "fn::pin_registered($user)", map[string]interface{}{
 			"user": (*user.ID),
 		})
 		if err != nil {
@@ -179,8 +181,9 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"message": "Registered",
-			// TODO: add number of subjects/lectures added to database to response
+			"message":  "Registered",
+			"lectures": (*lectures)[0].Result,
+			"pinned":   (*pinned)[0].Result,
 		})
 	})
 

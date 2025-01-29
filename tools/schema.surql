@@ -157,7 +157,7 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
         };
     };
 
-    RETURN NONE;
+    RETURN count(SELECT id FROM lecture WHERE users ?= $user);
 };
 
 // Used to pin the registered subjects of the latest session 
@@ -185,7 +185,7 @@ DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>) {
         RELATE $user->pinned->subject:[$department, $subject_code] RETURN NONE;
     };
 
-    RETURN NONE;
+    RETURN count(SELECT id FROM pinned WHERE in = $user);
 };
 
 DEFINE ANALYZER OVERWRITE subject_analyzer TOKENIZERS blank FILTERS ascii,lowercase,edgengram(2,10);
