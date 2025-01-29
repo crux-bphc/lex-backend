@@ -399,6 +399,69 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		ctx.JSON(http.StatusOK, slides)
 	})
 
+	authorized.GET("/ttid/:ttid/slides/download", func(ctx *gin.Context) {
+		ttid := ctx.Param("ttid")
+		token := getImpartusJwtForUser(ctx)
+
+		data, err := impartus.Client.GetTTIDInfo(token, ttid)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-ttid-info",
+				"cause":   "impartus",
+			})
+			return
+		}
+
+		var rawData struct {
+			SessionId int `json:"sessionId"`
+			SubjectId int `json:"subjectId"`
+			VideoId   int `json:"videoId"`
+		}
+		if err := json.Unmarshal(data, &rawData); err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "unmarshal-ttid-data",
+			})
+			return
+		}
+
+		impartusToken, err := impartus.Repository.GetLectureToken(rawData.SessionId, rawData.SubjectId)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-lecture-token",
+			})
+			return
+		}
+
+		slides, err := impartus.Client.GetSlides(impartusToken, strconv.Itoa(rawData.VideoId))
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "get-slides",
+				"cause":   "impartus",
+			})
+			return
+		}
+
+		imageUrls := make([]string, len(slides))
+		for i, slide := range slides {
+			imageUrls[i] = slide.Url
+		}
+
+		ctx.Status(200)
+		ctx.Header("Content-Type", "application/pdf")
+		_, err = impartus.WriteImagesToPDF(imageUrls, ctx.Writer)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "convert-images-to-pdf",
+			})
+			return
+		}
+	})
+
 	// Returns video info based on ttid
 	authorized.GET("/ttid/:ttid/info", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
