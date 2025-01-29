@@ -184,7 +184,10 @@ DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>) {
         let $department = array::at($name_array, 0);
         let $subject_code = array::at($name_array, 1);
 
-        RELATE $user->pinned->subject:[$department, $subject_code] RETURN NONE;
+        
+        IF array::is_empty(SELECT value id FROM pinned WHERE in = $user AND out = subject:[$department, $subject_code]) {
+            RELATE $user->pinned->subject:[$department, $subject_code] RETURN NONE;
+        };
     };
 
     RETURN count(SELECT id FROM pinned WHERE in = $user);
