@@ -414,9 +414,10 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 		}
 
 		var rawData struct {
-			SessionId int `json:"sessionId"`
-			SubjectId int `json:"subjectId"`
-			VideoId   int `json:"videoId"`
+			SubjectName string `json:"subjectName"`
+			SessionId   int    `json:"sessionId"`
+			SubjectId   int    `json:"subjectId"`
+			VideoId     int    `json:"videoId"`
 		}
 		if err := json.Unmarshal(data, &rawData); err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -450,17 +451,16 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			imageUrls[i] = slide.Url
 		}
 
-		ctx.Status(200)
-		ctx.Header("Content-Type", "application/pdf")
+		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.pdf", rawData.SubjectName))
 		_, err = impartus.WriteImagesToPDF(imageUrls, ctx.Writer)
 		if err != nil {
-			ctx.Header("Content-Type", "application/json")
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
 				"code":    "convert-images-to-pdf",
 			})
 			return
 		}
+
 	})
 
 	// Returns video info based on ttid
