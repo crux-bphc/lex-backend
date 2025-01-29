@@ -73,7 +73,7 @@ DEFINE TABLE lecture SCHEMAFULL;
 DEFINE FIELD impartus_session ON lecture TYPE int;
 DEFINE FIELD impartus_subject ON lecture TYPE int;
 DEFINE FIELD subject ON lecture TYPE record<subject>;
-DEFINE FIELD section ON lecture TYPE int;
+DEFINE FIELD section ON lecture TYPE string;
 DEFINE FIELD professor ON lecture TYPE string;
 DEFINE FIELD users ON lecture TYPE set<record<user>>;
 
@@ -97,8 +97,10 @@ DEFINE FUNCTION OVERWRITE fn::extra::check_lecture_name($name: string) {
         RETURN false;
     };
 
-    let $lecture_section = string::slice(array::at($name_array, -1), 1);
-    IF !string::is::numeric($lecture_section) {
+    let $lecture_section = array::at($name_array, -1);
+    // lecture section should be of the form CX (like L1 or T1)
+    IF !(string::is::alpha(string::slice($lecture_section, 0, 1)) && 
+        string::is::numeric(string::slice($lecture_section, 1))) {
         RETURN false;
     };
 
@@ -127,7 +129,7 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
 
         let $department = array::at($name_array, 0);
         let $subject_code = array::at($name_array, 1);
-        let $lecture_section = type::int(string::slice(array::at($name_array, -1), 1));
+        let $lecture_section = array::at($name_array, -1);
 
         // contains just the subject name, like "OPERATING SYSTEMS"
         let $subject_name = array::join(array::slice($name_array, 2, -1), " ");
