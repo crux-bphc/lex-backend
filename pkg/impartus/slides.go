@@ -13,6 +13,7 @@ type slide struct {
 	End   int    `json:"end"`
 }
 
+// Fetches slides based on videoId and returns them in a nicer format
 func (client *ImpartusClient) GetSlides(token, videoId string) ([]slide, error) {
 	data, err := client.GetVideoInfo(token, videoId)
 	if err != nil {

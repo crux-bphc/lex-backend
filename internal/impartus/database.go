@@ -61,7 +61,6 @@ type Lecture struct {
 	Users           []string         `json:"-"`
 }
 
-// TODO: add ability to search for and filter lectures
 func (repo *impartusRepository) GetSubjects(query string) ([]Subject, error) {
 	res, err := surrealdb.Query[[]Subject](
 		repo.DB,

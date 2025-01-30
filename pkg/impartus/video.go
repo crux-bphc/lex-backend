@@ -31,6 +31,7 @@ func (client *ImpartusClient) GetVideos(token string, subjectId, sessionId int) 
 	return io.ReadAll(resp.Body)
 }
 
+// Get the video info based on videoId from impartus
 func (client *ImpartusClient) GetVideoInfo(token, videoId string) ([]byte, error) {
 	videoUrl := fmt.Sprintf("%s/videos/params/id/%s", client.BaseUrl, videoId)
 	req, err := http.NewRequest(http.MethodGet, videoUrl, nil)
@@ -53,6 +54,7 @@ func (client *ImpartusClient) GetVideoInfo(token, videoId string) ([]byte, error
 	return io.ReadAll(resp.Body)
 }
 
+// Get the video info based on ttid from impartus
 func (client *ImpartusClient) GetTTIDInfo(token, ttid string) ([]byte, error) {
 	videoUrl := fmt.Sprintf("%s/lectures/%s/info", client.BaseUrl, ttid)
 	req, err := http.NewRequest(http.MethodGet, videoUrl, nil)
@@ -97,6 +99,7 @@ func (client *ImpartusClient) GetIndexM3U8(token, ttid string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
+// Get m3u8 file from impartus
 func (client *ImpartusClient) GetM3U8Chunk(token, m3u8 string) ([]byte, error) {
 	chunkUrl := fmt.Sprintf("%s/fetchvideo?tag=LC&inm3u8=%s", client.BaseUrl, m3u8)
 	req, err := http.NewRequest(http.MethodGet, chunkUrl, nil)
