@@ -1,7 +1,6 @@
 package impartus
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/crux-bphc/lex/internal/auth"
@@ -29,6 +28,7 @@ func ValidJwtMiddleware() gin.HandlerFunc {
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
+				"code":    "db-query",
 			})
 			return
 		}
@@ -37,7 +37,8 @@ func ValidJwtMiddleware() gin.HandlerFunc {
 
 		if len(impartusJwt) == 0 {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"message": errors.New("enter correct impartus password to access resource"),
+				"message": "register or enter correct impartus password to access resource",
+				"code":    "get-token",
 			})
 			return
 		}
