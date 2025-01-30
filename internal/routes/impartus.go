@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -18,66 +17,12 @@ import (
 	"github.com/surrealdb/surrealdb.go/pkg/models"
 )
 
-// ensures that the user accessing multipartus is still using the same password
-// which means that this user's courses are accessible to other users.
-func impartusValidJwtMiddleware() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		claims := auth.GetClaims(ctx)
-		impartusJwtResult, err := surrealdb.Query[string](
-			impartus.Repository.DB,
-			"RETURN fn::get_token($user)",
-			map[string]interface{}{
-				"user": models.RecordID{
-					Table: "user",
-					ID:    claims.EMail,
-				},
-			},
-		)
-
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-
-		impartusJwt := (*impartusJwtResult)[0].Result
-
-		if len(impartusJwt) == 0 {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"message": errors.New("enter correct impartus password to access resource"),
-			})
-			return
-		}
-
-		ctx.Set("IMPARTUS_JWT", impartusJwt)
-
-		ctx.Next()
-	}
-}
-
-// returns the already fetched impartus jwt token of the user from the database
-func getImpartusJwtForUser(ctx *gin.Context) string {
-	token, _ := ctx.Get("IMPARTUS_JWT")
-	return token.(string)
-}
-
-// Map of impartus session id as key and a tuple of [year, sem] as value
-var impartusSessionMap = map[int][2]int{
-	1456: {2024, 2},
-	1426: {2024, 1},
-	1369: {2023, 2},
-	1339: {2023, 1},
-	1275: {2022, 2},
-	1249: {2022, 1},
-}
-
 func RegisterImpartusRoutes(router *gin.Engine) {
 	r := router.Group("/impartus")
 	r.Use(auth.Middleware())
 
 	authorized := r.Group("/")
-	authorized.Use(impartusValidJwtMiddleware())
+	authorized.Use(impartus.ValidJwtMiddleware())
 
 	r.GET("/user", func(ctx *gin.Context) {
 		// TODO: return a bunch of user info such as number of pinned subjects etc
@@ -189,13 +134,13 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	// Returns a map of available session ids as [year, sem]
 	r.GET("/session", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, impartusSessionMap)
+		ctx.JSON(http.StatusOK, impartus.SessionMap)
 	})
 
 	// Returns a tuple of a specific session id as [year, sem]
 	r.GET("/session/:id", func(ctx *gin.Context) {
 		sessionId, _ := strconv.Atoi(ctx.Param("id"))
-		ctx.JSON(http.StatusOK, impartusSessionMap[sessionId])
+		ctx.JSON(http.StatusOK, impartus.SessionMap[sessionId])
 	})
 
 	r.GET("/subject/search", func(ctx *gin.Context) {
@@ -334,7 +279,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	// Returns video info based on videoId
 	authorized.GET("/video/:videoId/info", func(ctx *gin.Context) {
 		videoId := ctx.Param("videoId")
-		token := getImpartusJwtForUser(ctx)
+		token := impartus.GetImpartusJwtForUser(ctx)
 
 		data, err := impartus.Client.GetVideoInfo(token, videoId)
 		if err != nil {
@@ -352,7 +297,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	// Returns list of slide image urls for the given ttid
 	authorized.GET("/ttid/:ttid/slides", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
-		token := getImpartusJwtForUser(ctx)
+		token := impartus.GetImpartusJwtForUser(ctx)
 
 		data, err := impartus.Client.GetTTIDInfo(token, ttid)
 		if err != nil {
@@ -401,7 +346,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	authorized.GET("/ttid/:ttid/slides/download", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
-		token := getImpartusJwtForUser(ctx)
+		token := impartus.GetImpartusJwtForUser(ctx)
 
 		data, err := impartus.Client.GetTTIDInfo(token, ttid)
 		if err != nil {
@@ -466,7 +411,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	// Returns video info based on ttid
 	authorized.GET("/ttid/:ttid/info", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
-		token := getImpartusJwtForUser(ctx)
+		token := impartus.GetImpartusJwtForUser(ctx)
 
 		data, err := impartus.Client.GetTTIDInfo(token, ttid)
 		if err != nil {
@@ -484,7 +429,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	// Returns the decryption key for the particular video without an Authorization header
 	authorized.GET("/ttid/:ttid/key", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
-		token := getImpartusJwtForUser(ctx)
+		token := impartus.GetImpartusJwtForUser(ctx)
 
 		data, err := impartus.Client.GetDecryptionKey(token, ttid)
 		if err != nil {
@@ -506,7 +451,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	// Gets a video stream
 	authorized.GET("/ttid/:ttid/m3u8", func(ctx *gin.Context) {
 		ttid := ctx.Param("ttid")
-		token := getImpartusJwtForUser(ctx)
+		token := impartus.GetImpartusJwtForUser(ctx)
 
 		hostUrl := location.Get(ctx).String()
 
@@ -530,7 +475,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	// replaced by the server implementation
 	authorized.GET("/chunk/m3u8", func(ctx *gin.Context) {
 		m3u8 := ctx.Query("m3u8")
-		token := getImpartusJwtForUser(ctx)
+		token := impartus.GetImpartusJwtForUser(ctx)
 
 		hostUrl := location.Get(ctx).String()
 
