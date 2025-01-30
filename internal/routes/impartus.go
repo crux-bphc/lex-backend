@@ -162,15 +162,32 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 	r.GET("/subject/:department/:code", func(ctx *gin.Context) {
 		// CS/ECE/EEE/INSTR becomes CS,ECE,EEE,INSTR in the URL
 		department := strings.ReplaceAll(ctx.Param("department"), ",", "/")
-
 		subjectCode := ctx.Param("code")
 
-		data, err := surrealdb.Query[struct {
-			Subject  impartus.Subject   `json:"subject,omitempty"`
-			Lectures []impartus.Lecture `json:"lectures,omitempty"`
-		}](
+		subject, err := surrealdb.Select[impartus.Subject](
 			impartus.Repository.DB,
-			"SELECT (SELECT * FROM ONLY $parent) as subject, (SELECT * OMIT users FROM lecture WHERE subject = $parent.id) as lectures FROM ONLY $subject",
+			models.RecordID{Table: "subject", ID: []string{department, subjectCode}},
+		)
+
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+				"code":    "select-subject",
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, subject)
+	})
+
+	r.GET("/subject/:department/:code/lectures", func(ctx *gin.Context) {
+		// CS/ECE/EEE/INSTR becomes CS,ECE,EEE,INSTR in the URL
+		department := strings.ReplaceAll(ctx.Param("department"), ",", "/")
+		subjectCode := ctx.Param("code")
+
+		lectures, err := surrealdb.Query[[]impartus.Lecture](
+			impartus.Repository.DB,
+			"SELECT * OMIT users FROM lecture WHERE subject=$subject ORDER BY impartus_session DESC",
 			map[string]interface{}{
 				"subject": models.RecordID{Table: "subject", ID: []string{department, subjectCode}},
 			},
@@ -184,7 +201,7 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, (*data)[0].Result)
+		ctx.JSON(http.StatusOK, (*lectures)[0].Result)
 	})
 
 	// Returns the list of subjects the user has pinned
