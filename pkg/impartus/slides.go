@@ -2,8 +2,13 @@ package pkg
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
+
+	"github.com/iunary/fakeuseragent"
 )
 
 type slide struct {
@@ -46,4 +51,25 @@ func (client *ImpartusClient) GetSlides(token, videoId string) ([]slide, error) 
 	}
 
 	return slides, nil
+}
+
+func (client *ImpartusClient) GetSlidesPDF(token, videoId string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/videos/%s/auto-generated-pdf", client.BaseUrl, videoId), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("user-agent", fakeuseragent.RandomUserAgent())
+
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("invalid status code: " + resp.Status)
+	}
+
+	return io.ReadAll(resp.Body)
 }

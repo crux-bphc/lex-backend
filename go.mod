@@ -8,7 +8,6 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/iunary/fakeuseragent v1.0.0
 	github.com/semihalev/gin-stats v0.0.0-20180505163755-30fdcbbd3533
-	github.com/signintech/gopdf v0.29.2
 	github.com/surrealdb/surrealdb.go v0.3.2
 )
 
@@ -18,8 +17,6 @@ require (
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
-	github.com/phpdave11/gofpdi v1.0.14 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/time v0.9.0 // indirect

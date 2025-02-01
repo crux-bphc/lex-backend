@@ -398,31 +398,18 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 			return
 		}
 
-		slides, err := impartus.Client.GetSlides(impartusToken, strconv.Itoa(rawData.VideoId))
+		pdf, err := impartus.Client.GetSlidesPDF(impartusToken, strconv.Itoa(rawData.VideoId))
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
-				"code":    "get-slides",
+				"code":    "get-slides-pdf",
 				"cause":   "impartus",
 			})
 			return
 		}
 
-		imageUrls := make([]string, len(slides))
-		for i, slide := range slides {
-			imageUrls[i] = slide.Url
-		}
-
 		ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.pdf", rawData.SubjectName))
-		_, err = impartus.WriteImagesToPDF(imageUrls, ctx.Writer)
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"message": err.Error(),
-				"code":    "convert-images-to-pdf",
-			})
-			return
-		}
-
+		ctx.Data(http.StatusOK, "application/pdf", pdf)
 	})
 
 	// Returns video info based on ttid
