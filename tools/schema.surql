@@ -9,9 +9,8 @@ USE NS lex;
 -- ------
 USE DB impartus;
 
--- define the users table
-DEFINE TABLE user SCHEMAFULL;
 
+DEFINE TABLE user SCHEMAFULL;
 DEFINE FIELD email ON user TYPE string ASSERT string::is::email($value);
 DEFINE FIELD password ON user TYPE string;
 DEFINE FIELD jwt ON user TYPE option<string>;
@@ -58,7 +57,6 @@ DEFINE EVENT token_updated ON user
     UPDATE ONLY $value SET updated_at = time::now();
 };
 
--- define the subjects table
 // Defines the course independently of the session or subject id.
 DEFINE TABLE subject SCHEMAFULL;
 // id field is of the form `[department (eg: CS,ECE), subject_code (eg, F211)]`
@@ -66,7 +64,6 @@ DEFINE FIELD department ON subject TYPE string;
 DEFINE FIELD code ON subject TYPE string;
 DEFINE FIELD name ON subject TYPE string;
 
--- define the lectures table
 // Defines the lectures across various years and lecture sections.
 DEFINE TABLE lecture SCHEMAFULL;
 // id field is of the form `[session_id (defines which sem the course was taken), subject_id]`
@@ -77,11 +74,17 @@ DEFINE FIELD section ON lecture TYPE string;
 DEFINE FIELD professor ON lecture TYPE string;
 DEFINE FIELD users ON lecture TYPE set<record<user>>;
 
--- define the pinned lectures table
+
 DEFINE TABLE pinned TYPE RELATION FROM user TO subject ENFORCED;
 DEFINE INDEX unique_relationships
     ON TABLE pinned
     COLUMNS in, out UNIQUE;
+
+// Stores the lectures whose names could not be parsed automatically
+DEFINE TABLE malformed_lectures SCHEMAFULL;
+DEFINE FIELD users ON malformed_lectures TYPE set<record<user>>;
+DEFINE FIELD data ON malformed_lectures FLEXIBLE TYPE object;
+DEFINE FIELD fixed ON malformed_lectures TYPE bool DEFAULT false;
 
 // Checks if the lecture name contains all the information needed by lex
 DEFINE FUNCTION OVERWRITE fn::extra::check_lecture_name($name: string) {
@@ -121,6 +124,8 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
 
     FOR $lecture IN $lectures {
         IF !fn::extra::check_lecture_name($lecture.subjectName) {
+            // extract malformed lecture
+            UPSERT type::thing("malformed_lectures", $lecture.subjectName) SET users += $user, data = $lecture;
             CONTINUE;
         };
 
