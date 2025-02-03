@@ -1,6 +1,7 @@
 package impartus_routes
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -193,12 +194,16 @@ func getIndexM3U8(ctx *gin.Context) {
 
 var cipherUriRegex = regexp.MustCompile(`URI=".*ttid=(\d*)&.*"`)
 
+func transformChunk(hostUrl, token string, chunk []byte) []byte {
+	decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/ttid/$1/key?token=%s"`, hostUrl, token)
+	return cipherUriRegex.ReplaceAll(chunk, []byte(decryptionKeyUrl))
+}
+
 // Direct link to the m3u8 file with the uri of the decryption key for the AES-128 cipher
 // replaced by the server implementation
 func getM3U8Chunk(ctx *gin.Context) {
 	m3u8 := ctx.Query("m3u8")
 	token := impartus.GetImpartusJwtForUser(ctx)
-
 	hostUrl := location.Get(ctx).String()
 
 	data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
@@ -211,9 +216,69 @@ func getM3U8Chunk(ctx *gin.Context) {
 		return
 	}
 
-	decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/ttid/$1/key"`, hostUrl)
-	data = cipherUriRegex.ReplaceAll(data, []byte(decryptionKeyUrl))
+	data = transformChunk(hostUrl, token, data)
 	ctx.Data(http.StatusOK, "application/x-mpegurl", data)
+}
+
+func getM3U8ChunkInfo(ctx *gin.Context) {
+	m3u8 := ctx.Query("m3u8")
+	token := impartus.GetImpartusJwtForUser(ctx)
+
+	data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
+
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    "get-m3u8-chunk",
+			"cause":   "impartus",
+		})
+		return
+	}
+
+	hasRightView := bytes.Contains(data, []byte("#EXT-X-DISCONTINUITY"))
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"views": gin.H{
+			"left":  true,
+			"right": hasRightView,
+		},
+	})
+}
+
+func getLeftView(ctx *gin.Context) {
+	m3u8 := ctx.Query("m3u8")
+	token := impartus.GetImpartusJwtForUser(ctx)
+
+	data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    "get-m3u8-chunk",
+			"cause":   "impartus",
+		})
+		return
+	}
+
+	views := impartus.SplitViews(data)
+	ctx.Data(http.StatusOK, "application/x-mpegurl", views.Left)
+}
+
+func getRightView(ctx *gin.Context) {
+	m3u8 := ctx.Query("m3u8")
+	token := impartus.GetImpartusJwtForUser(ctx)
+
+	data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    "get-m3u8-chunk",
+			"cause":   "impartus",
+		})
+		return
+	}
+
+	views := impartus.SplitViews(data)
+	ctx.Data(http.StatusOK, "application/x-mpegurl", views.Right)
 }
 
 func RegisterVideoRoutes(r *gin.RouterGroup) {
@@ -227,4 +292,7 @@ func RegisterVideoRoutes(r *gin.RouterGroup) {
 	authorized.GET("/ttid/:ttid/key", getTTIDdecryptionKey)
 	authorized.GET("/ttid/:ttid/m3u8", getIndexM3U8)
 	authorized.GET("/chunk/m3u8", getM3U8Chunk)
+	authorized.GET("/chunk/m3u8/info", getM3U8ChunkInfo)
+	authorized.GET("/chunk/m3u8/left", getLeftView)
+	authorized.GET("/chunk/m3u8/right", getRightView)
 }

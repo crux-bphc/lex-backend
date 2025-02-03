@@ -72,7 +72,7 @@ func Middleware() gin.HandlerFunc {
 		var token string
 
 		// Use the url query if available, otherwise use the auth header
-		if token = ctx.Query("bearer"); len(token) == 0 {
+		if token = ctx.Query("token"); len(token) == 0 {
 			var err error
 			token, err = getBearerToken(ctx)
 			if err != nil {
