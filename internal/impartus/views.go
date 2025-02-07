@@ -10,6 +10,7 @@ type views struct {
 	Right []byte
 }
 
+// Returns the left and right views of a video
 func SplitViews(chunk []byte) views {
 	scanner := bufio.NewScanner(bytes.NewReader(chunk))
 	scanner.Split(bufio.ScanLines)

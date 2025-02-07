@@ -135,6 +135,7 @@ func getPinnedSubjects(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, subjects)
 }
 
+// Adds or removes a subject from the user's pinned subjects
 func modifyPinnedSubjects(ctx *gin.Context) {
 	claims := auth.GetClaims(ctx)
 

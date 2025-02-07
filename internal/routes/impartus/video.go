@@ -99,6 +99,7 @@ func getSlides(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, slides)
 }
 
+// Returns the auto-generated PDF of the slides for the given ttid
 func downloadSlides(ctx *gin.Context) {
 	ttid := ctx.Param("ttid")
 	token := impartus.GetImpartusJwtForUser(ctx)
@@ -172,6 +173,7 @@ func getTTIDdecryptionKey(ctx *gin.Context) {
 
 var m3u8Regex = regexp.MustCompile("http.*inm3u8=(.*)")
 
+// The index m3u8 file containing streams of different video resolutions
 func getIndexM3U8(ctx *gin.Context) {
 	ttid := ctx.Param("ttid")
 	token := impartus.GetImpartusJwtForUser(ctx)
@@ -194,6 +196,7 @@ func getIndexM3U8(ctx *gin.Context) {
 
 var cipherUriRegex = regexp.MustCompile(`URI=".*ttid=(\d*)&.*"`)
 
+// Replace decryption key URI in the chunk with the server implementation
 func transformChunk(hostUrl, token string, chunk []byte) []byte {
 	decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/ttid/$1/key?token=%s"`, hostUrl, token)
 	return cipherUriRegex.ReplaceAll(chunk, []byte(decryptionKeyUrl))
@@ -245,6 +248,7 @@ func getM3U8ChunkInfo(ctx *gin.Context) {
 	})
 }
 
+// Returns the left view of the video
 func getLeftView(ctx *gin.Context) {
 	m3u8 := ctx.Query("m3u8")
 	token := impartus.GetImpartusJwtForUser(ctx)
@@ -263,6 +267,7 @@ func getLeftView(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "application/x-mpegurl", views.Left)
 }
 
+// Returns the right view of the video
 func getRightView(ctx *gin.Context) {
 	m3u8 := ctx.Query("m3u8")
 	token := impartus.GetImpartusJwtForUser(ctx)

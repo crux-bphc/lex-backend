@@ -10,6 +10,7 @@ import (
 	"github.com/surrealdb/surrealdb.go/pkg/models"
 )
 
+// Returns a list of subjects based on the query
 func searchSubjects(ctx *gin.Context) {
 	query := ctx.Query("q")
 
@@ -25,6 +26,7 @@ func searchSubjects(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, subjects)
 }
 
+// Returns information about a particular subject
 func getSubjectInfo(ctx *gin.Context) {
 	// CS/ECE/EEE/INSTR becomes CS,ECE,EEE,INSTR in the URL
 	department := strings.ReplaceAll(ctx.Param("department"), ",", "/")
