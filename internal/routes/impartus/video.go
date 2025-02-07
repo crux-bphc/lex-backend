@@ -197,8 +197,8 @@ func getIndexM3U8(ctx *gin.Context) {
 var cipherUriRegex = regexp.MustCompile(`URI=".*ttid=(\d*)&.*"`)
 
 // Replace decryption key URI in the chunk with the server implementation
-func transformChunk(hostUrl, token string, chunk []byte) []byte {
-	decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/ttid/$1/key?token=%s"`, hostUrl, token)
+func transformChunk(hostUrl string, chunk []byte) []byte {
+	decryptionKeyUrl := fmt.Sprintf(`URI="%s/impartus/ttid/$1/key"`, hostUrl)
 	return cipherUriRegex.ReplaceAll(chunk, []byte(decryptionKeyUrl))
 }
 
@@ -219,7 +219,7 @@ func getM3U8Chunk(ctx *gin.Context) {
 		return
 	}
 
-	data = transformChunk(hostUrl, token, data)
+	data = transformChunk(hostUrl, data)
 	ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 }
 
@@ -252,6 +252,7 @@ func getM3U8ChunkInfo(ctx *gin.Context) {
 func getLeftView(ctx *gin.Context) {
 	m3u8 := ctx.Query("m3u8")
 	token := impartus.GetImpartusJwtForUser(ctx)
+	hostUrl := location.Get(ctx).String()
 
 	data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
 	if err != nil {
@@ -264,13 +265,15 @@ func getLeftView(ctx *gin.Context) {
 	}
 
 	views := impartus.SplitViews(data)
-	ctx.Data(http.StatusOK, "application/x-mpegurl", views.Left)
+	data = transformChunk(hostUrl, views.Left)
+	ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 }
 
 // Returns the right view of the video
 func getRightView(ctx *gin.Context) {
 	m3u8 := ctx.Query("m3u8")
 	token := impartus.GetImpartusJwtForUser(ctx)
+	hostUrl := location.Get(ctx).String()
 
 	data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
 	if err != nil {
@@ -283,7 +286,8 @@ func getRightView(ctx *gin.Context) {
 	}
 
 	views := impartus.SplitViews(data)
-	ctx.Data(http.StatusOK, "application/x-mpegurl", views.Right)
+	data = transformChunk(hostUrl, views.Right)
+	ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 }
 
 func RegisterVideoRoutes(r *gin.RouterGroup) {
