@@ -1,0 +1,15 @@
+meta {
+  name: Video info
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base}}/impartus/video/:videoId/info
+  body: none
+  auth: inherit
+}
+
+params:path {
+  videoId: 6629998
+}

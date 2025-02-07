@@ -1,11 +1,11 @@
 meta {
-  name: Get video key
+  name: Decryption key
   type: http
-  seq: 9
+  seq: 1
 }
 
 get {
-  url: {{baseUrl}}/impartus/ttid/:ttid/key
+  url: {{base}}/impartus/ttid/:ttid/key
   body: none
   auth: inherit
 }

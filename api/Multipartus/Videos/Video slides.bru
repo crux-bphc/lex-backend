@@ -1,0 +1,15 @@
+meta {
+  name: Video slides
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base}}/impartus/ttid/:ttid/slides
+  body: none
+  auth: inherit
+}
+
+params:path {
+  ttid: 9782707
+}

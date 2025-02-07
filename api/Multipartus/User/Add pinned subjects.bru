@@ -1,11 +1,11 @@
 meta {
-  name: Remove pinned subjects
+  name: Add pinned subjects
   type: http
-  seq: 6
+  seq: 4
 }
 
-delete {
-  url: {{baseUrl}}/impartus/user/subjects
+post {
+  url: {{base}}/impartus/user/subjects
   body: json
   auth: inherit
 }

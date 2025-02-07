@@ -4,7 +4,7 @@ meta {
   seq: 1
 }
 
-post {
+get {
   url: 
   body: none
   auth: oauth2
@@ -23,7 +23,7 @@ auth:oauth2 {
 }
 
 vars:post-response {
-  jwtToken: res.body.id_token
+  id_token: res.body.id_token
 }
 
 docs {

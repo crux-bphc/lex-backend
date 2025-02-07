@@ -1,0 +1,19 @@
+meta {
+  name: Index chunk
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base}}/impartus/ttid/:ttid/m3u8
+  body: none
+  auth: inherit
+}
+
+params:path {
+  ttid: 9472540
+}
+
+docs {
+  Points to other chunks with videos of different resolutions
+}
