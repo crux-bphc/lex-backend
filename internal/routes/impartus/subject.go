@@ -73,6 +73,6 @@ func getSubjectLectures(ctx *gin.Context) {
 
 func RegisterSubjectRoutes(r *gin.RouterGroup) {
 	r.GET("/subject/search", searchSubjects)
-	r.POST("/subject/:department/:code", getSubjectInfo)
-	r.POST("/subject/:department/:code/lectures", getSubjectLectures)
+	r.GET("/subject/:department/:code", getSubjectInfo)
+	r.GET("/subject/:department/:code/lectures", getSubjectLectures)
 }
