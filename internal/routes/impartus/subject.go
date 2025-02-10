@@ -2,6 +2,7 @@ package impartus_routes
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/crux-bphc/lex/internal/impartus"
@@ -73,8 +74,36 @@ func getSubjectLectures(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, (*lectures)[0].Result)
 }
 
+// Returns a list of videos from the lecture using a registered user's impartus jwt token
+func getLectureVideos(ctx *gin.Context) {
+	sessionId, _ := strconv.Atoi(ctx.Param("sessionId"))
+	subjectId, _ := strconv.Atoi(ctx.Param("subjectId"))
+
+	impartusToken, err := impartus.Repository.GetLectureToken(sessionId, subjectId)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    "get-lecture-token",
+		})
+		return
+	}
+
+	data, err := impartus.Client.GetVideos(impartusToken, subjectId, sessionId)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    "get-videos",
+			"cause":   "impartus",
+		})
+		return
+	}
+
+	ctx.Data(http.StatusOK, "application/json", data)
+}
+
 func RegisterSubjectRoutes(r *gin.RouterGroup) {
 	r.GET("/subject/search", searchSubjects)
 	r.GET("/subject/:department/:code", getSubjectInfo)
 	r.GET("/subject/:department/:code/lectures", getSubjectLectures)
+	r.GET("/lecture/:sessionId/:subjectId", getLectureVideos)
 }
