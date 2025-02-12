@@ -200,3 +200,14 @@ DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>) {
 
 DEFINE ANALYZER OVERWRITE subject_analyzer TOKENIZERS blank FILTERS ascii,lowercase,edgengram(2,10);
 DEFINE INDEX OVERWRITE subject_search ON subject FIELDS name,department,code SEARCH ANALYZER subject_analyzer BM25;
+
+DEFINE TABLE watch_history TYPE RELATION;
+DEFINE FIELD in ON watch_history TYPE record<user>;
+// ttid of video
+DEFINE FIELD out ON watch_history TYPE int;
+DEFINE INDEX unique_relationships
+    ON TABLE watch_history
+    COLUMNS in, out UNIQUE;
+DEFINE FIELD lecture ON watch_history TYPE record<lecture>;
+DEFINE FIELD timestamp ON watch_history TYPE int;
+DEFINE FIELD updated_at ON watch_history TYPE datetime VALUE time::now();
