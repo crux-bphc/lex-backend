@@ -123,9 +123,12 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
     });
 
     FOR $lecture IN $lectures {
+        let $impartus_session = type::int($lecture.sessionId);
+        let $impartus_subject = type::int($lecture.subjectId);
+
         IF !fn::extra::check_lecture_name($lecture.subjectName) {
             // extract malformed lecture
-            UPSERT type::thing("malformed_lectures", $lecture.subjectName) SET users += $user, data = $lecture;
+            UPSERT type::thing("malformed_lectures", [$impartus_session, $impartus_subject]) SET users += $user, data = $lecture;
             CONTINUE;
         };
 
@@ -146,8 +149,7 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
             name: $subject_name
         };
 
-        let $impartus_session = type::int($lecture.sessionId);
-        let $impartus_subject = type::int($lecture.subjectId);
+        
 
         // create a lecture and add user registered to lecture
         IF record::exists(lecture:[$impartus_session, $impartus_subject]) {
