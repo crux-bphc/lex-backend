@@ -52,6 +52,7 @@ func getSubjectInfo(ctx *gin.Context) {
 // Returns a list of all the valid lecture sections for the particular subject
 func getSubjectLectures(ctx *gin.Context) {
 	// CS/ECE/EEE/INSTR becomes CS,ECE,EEE,INSTR in the URL
+	// TODO: replace, currently exists for backward compatibility
 	department := strings.ReplaceAll(ctx.Param("department"), ",", "/")
 	subjectCode := ctx.Param("code")
 

@@ -135,7 +135,7 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
         // should be like ["BITS", "F111", "SIGMA", "BOY", "L1"]
         let $name_array = string::words($lecture.subjectName);
 
-        let $department = array::at($name_array, 0);
+        let $department = string::replace(array::at($name_array, 0), "/", "|");
         let $subject_code = array::at($name_array, 1);
         let $lecture_section = array::at($name_array, -1);
 
@@ -188,7 +188,7 @@ DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>) {
         };
 
         let $name_array = string::words($lecture.subjectName);
-        let $department = array::at($name_array, 0);
+        let $department = string::replace(array::at($name_array, 0), "/", "|");
         let $subject_code = array::at($name_array, 1);
 
         
