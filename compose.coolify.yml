@@ -14,14 +14,29 @@ services:
         condition: service_healthy
 
   db:
-    extends:
-      file: compose.base.yml
-      service: db
+    image: surrealdb/surrealdb:v2.1.4
+    user: root
+    entrypoint:
+      - /surreal
+      - start
+      - --import-file
+      - /extras/schema.surql
+      - --allow-all
+      - rocksdb:/database.db
+    healthcheck:
+      test: 
+        - CMD
+        - /surreal
+        - isready
+      interval: 1m
+      start_interval: 4s
+      start_period: 10s
+    volumes:
+      - ./tools/schema.surql:/extras/schema.surql:ro
+      - database:/database.db
     environment:
       - 'SURREAL_USER=${SERVICE_USER_DB}'
       - 'SURREAL_PASS=${SERVICE_PASSWORD_DB}'
-    volumes:
-      - database:/database.db
 
 volumes:
   database:

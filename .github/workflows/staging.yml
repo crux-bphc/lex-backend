@@ -13,5 +13,5 @@ jobs:
           cd lex-backend-staging
           git reset --hard HEAD
           git pull
-          docker compose -f compose.prod.yml down
-          docker compose -f compose.prod.yml up --build -d
+          docker compose --profile prod down
+          docker compose --profile prod up --build -d

@@ -2,6 +2,8 @@ services:
   db:
     image: surrealdb/surrealdb:v2.1.4
     user: root
+    ports:
+      - ${DATABASE_PORT}:8000
     entrypoint:
       - /surreal
       - start
@@ -19,7 +21,9 @@ services:
       start_period: 10s
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
-
+      - ./lex_db:/database.db
+    env_file: .env
+  
   migrate:
     image: surrealdb/surrealdb:v2.1.4
     entrypoint:
@@ -35,7 +39,9 @@ services:
     volumes:
       - ./tools/schema.surql:/extras/schema.surql:ro
     env_file: .env
+    profiles: [debug]
 
+  
   sql:
     image: surrealdb/surrealdb:v2.1.4
     entrypoint:
@@ -48,3 +54,29 @@ services:
       - --db
       - playground
     env_file: .env
+    profiles: [debug]
+  
+  dev:
+    image: cosmtrek/air
+    working_dir: /app
+    ports:
+      - ${BACKEND_PORT}:3000
+    volumes:
+      - ./:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    profiles: [dev]
+
+  app:
+    build:
+      context: .
+      dockerfile: Containerfile
+    ports:
+      - ${BACKEND_PORT}:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    profiles: [prod]

@@ -1,10 +1,10 @@
 .PHONY: migrate
 migrate:
-	docker compose -f compose.base.yml run --rm migrate
+	docker compose --profile debug run --rm migrate
 
 .PHONY: sql
 sql:
-	docker compose -f compose.base.yml run --rm sql
+	docker compose --profile debug run --rm sql
 
 .PHONY: test
 test:

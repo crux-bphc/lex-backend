@@ -24,6 +24,6 @@ go.work
 tmp
 
 # persistent docker volumes
-store/
+lex_db/
 
 .env
