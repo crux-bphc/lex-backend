@@ -3,7 +3,6 @@ package impartus_routes
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/crux-bphc/lex/internal/auth"
 	"github.com/crux-bphc/lex/internal/impartus"
@@ -73,14 +72,19 @@ func registerUser(ctx *gin.Context) {
 			Table: "user",
 			ID:    claims.EMail,
 		},
-		EMail:     claims.EMail,
-		Password:  body.Password,
-		Jwt:       impartusToken,
-		UpdatedAt: time.Now(),
+		EMail:    claims.EMail,
+		Password: body.Password,
+		Jwt:      impartusToken,
 	}
 
 	// create user in database
-	_, err = surrealdb.Create[any](impartus.Repository.DB, models.Table("user"), user)
+	_, err = surrealdb.Query[any](
+		impartus.Repository.DB,
+		"INSERT INTO user (id, email, password, jwt) VALUES ($user.id, $user.email, $user.password, $user.jwt) ON DUPLICATE KEY UPDATE password=$user.password, jwt=$user.jwt",
+		map[string]interface{}{
+			"user": user,
+		},
+	)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
