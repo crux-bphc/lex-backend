@@ -15,7 +15,6 @@ var jwks keyfunc.Keyfunc
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	// TODO: add more user attributes
 	EMail string `json:"email"`
 }
 
@@ -46,6 +45,24 @@ func getBearerToken(ctx *gin.Context) (string, error) {
 	return authHeaderArray[1], nil
 }
 
+// checks if the jwt token is obtained from the correct logto client
+func checkAudience(claims jwt.ClaimStrings) bool {
+	validAudiences := []string{
+		"k8fhucay2ilpaj2rtkrii", // Lex
+		"vcs78xneqspqqkt1oz7ml", // Multipartus Downloader
+	}
+
+	for _, aud := range claims {
+		for _, valid := range validAudiences {
+			if aud == valid {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func parseToken(jwtToken string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(jwtToken, &UserClaims{}, jwks.Keyfunc)
 
@@ -59,6 +76,12 @@ func parseToken(jwtToken string) (*UserClaims, error) {
 		return nil, errors.New("token is invalid")
 	}
 
+	if aud, err := token.Claims.GetAudience(); err != nil {
+		return nil, err
+	} else if !checkAudience(aud) {
+		return nil, errors.New("invalid audience")
+	}
+
 	// Type cast to add custom claims
 	if claims, ok := token.Claims.(*UserClaims); ok {
 		return claims, nil
@@ -67,6 +90,7 @@ func parseToken(jwtToken string) (*UserClaims, error) {
 	return nil, errors.New("cannot process claims")
 }
 
+// Middleware for checking Logto JWT tokens
 func Middleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var token string
