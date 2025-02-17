@@ -27,6 +27,5 @@ func RegisterImpartusRoutes(router *gin.Engine) {
 
 	impartus_routes.RegisterUserRoutes(r)
 	impartus_routes.RegisterSubjectRoutes(r)
-
 	impartus_routes.RegisterVideoRoutes(r)
 }

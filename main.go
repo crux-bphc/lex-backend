@@ -18,6 +18,7 @@ import (
 func main() {
 	router := gin.Default()
 
+	// CORS setup
 	corsConfig := cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
 		AllowHeaders:     []string{"*"},
@@ -32,6 +33,7 @@ func main() {
 
 	router.Use(cors.New(corsConfig))
 
+	// Location middleware
 	var locationMiddleware gin.HandlerFunc
 
 	if baseUri := os.Getenv("PUBLIC_URI"); len(baseUri) > 0 {
@@ -51,16 +53,20 @@ func main() {
 
 	router.Use(locationMiddleware)
 
+	// Stats middleware
 	router.Use(stats.RequestStats())
-
 	router.GET("/stats", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, stats.Report())
 	})
 
 	router.SetTrustedProxies(nil)
 
+	// Multipartus
 	routes.RegisterImpartusRoutes(router)
-	routes.RegisterUserRoutes(router)
+
+	router.GET("/", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, "Lex backend is online!")
+	})
 
 	router.Run(":3000")
 }

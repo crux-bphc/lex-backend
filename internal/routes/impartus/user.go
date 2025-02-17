@@ -12,9 +12,6 @@ import (
 )
 
 func getUserInfo(ctx *gin.Context) {
-	// TODO: return a bunch of user info such as number of pinned subjects etc
-	// also return if user currently has a valid impartus jwt
-
 	claims := auth.GetClaims(ctx)
 	registered, err := surrealdb.Query[struct {
 		Registered bool `json:"registered"`
