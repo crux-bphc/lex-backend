@@ -224,11 +224,22 @@ func getM3U8Chunk(ctx *gin.Context) {
 }
 
 func getM3U8ChunkInfo(ctx *gin.Context) {
-	m3u8 := ctx.Query("m3u8")
+	ttid := ctx.Param("ttid")
 	token := impartus.GetImpartusJwtForUser(ctx)
 
-	data, err := impartus.Client.GetM3U8Chunk(token, m3u8)
+	data, err := impartus.Client.GetIndexM3U8(token, ttid)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    "get-index-m3u8",
+			"cause":   "impartus",
+		})
+		return
+	}
 
+	m3u8 := string(m3u8Regex.FindSubmatch(data)[1])
+
+	data, err = impartus.Client.GetM3U8Chunk(token, m3u8)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": err.Error(),
@@ -300,8 +311,8 @@ func RegisterVideoRoutes(r *gin.RouterGroup) {
 	authorized.GET("/ttid/:ttid/slides/download", downloadSlides)
 	authorized.GET("/ttid/:ttid/key", getTTIDdecryptionKey)
 	authorized.GET("/ttid/:ttid/m3u8", getIndexM3U8)
+	authorized.GET("/ttid/:ttid/m3u8/info", getM3U8ChunkInfo)
 	authorized.GET("/chunk/m3u8", getM3U8Chunk)
-	authorized.GET("/chunk/m3u8/info", getM3U8ChunkInfo)
 	authorized.GET("/chunk/m3u8/left", getLeftView)
 	authorized.GET("/chunk/m3u8/right", getRightView)
 }
