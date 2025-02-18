@@ -91,7 +91,7 @@ func (repo *impartusRepository) GetPinnedSubjects(email string) ([]Subject, erro
 // Get a valid impartus jwt token of a user who is registered to the lecture
 func (repo *impartusRepository) GetLectureToken(sessionId, subjectId int) (string, error) {
 	res, err := surrealdb.Query[string](repo.DB,
-		"array::first((SELECT VALUE fn::get_token(id) from $lecture.users)[WHERE !type::is::none($this)])",
+		"rand::enum((SELECT VALUE fn::get_token(id) from $lecture.users)[WHERE !type::is::none($this)])",
 		map[string]interface{}{
 			"lecture": models.RecordID{Table: "lecture", ID: []int{sessionId, subjectId}},
 		},
