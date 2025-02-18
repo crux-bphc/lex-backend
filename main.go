@@ -10,6 +10,7 @@ import (
 
 	"github.com/crux-bphc/lex/internal/routes"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/location"
 	"github.com/gin-gonic/gin"
 	stats "github.com/semihalev/gin-stats"
@@ -17,6 +18,7 @@ import (
 
 func main() {
 	router := gin.Default()
+	router.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	// CORS setup
 	corsConfig := cors.Config{
