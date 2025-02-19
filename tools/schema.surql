@@ -14,19 +14,21 @@ DEFINE TABLE user SCHEMAFULL;
 DEFINE FIELD email ON user TYPE string ASSERT string::is::email($value);
 DEFINE FIELD password ON user TYPE string;
 DEFINE FIELD jwt ON user TYPE option<string>;
-DEFINE FIELD updated_at ON user TYPE datetime DEFAULT time::now();
+DEFINE FIELD updated_at ON user TYPE datetime VALUE time::now() READONLY;
 
 DEFINE INDEX userEmailIndex ON TABLE user COLUMNS email UNIQUE;
 
-DEFINE FUNCTION OVERWRITE fn::get_token($user: record<user>) {
+DEFINE FUNCTION OVERWRITE fn::get_token($user: record<user>, $base_url: option<string>) {
     // return none if the last password fetch attempt failed
     IF type::is::none($user.jwt) {
         RETURN NONE;
     };
 
     IF (time::now() - $user.updated_at > 6d) {
-        UPDATE ONLY $user SET jwt = function() {
-            const response = await fetch("https://bitshyd.impartus.com/api/auth/signin", {
+        let $endpoint = string::concat($base_url OR "https://bitshyd.impartus.com/api", "/auth/signin");
+        UPDATE ONLY $user SET jwt = function($endpoint) {
+            const [endpoint] = arguments;
+            const response = await fetch(endpoint, {
                 method: "POST",
                 body: JSON.stringify({
                     "username": this.email,
@@ -49,13 +51,6 @@ DEFINE FUNCTION OVERWRITE fn::get_token($user: record<user>) {
     RETURN $user.jwt;
 };
 
-// update timestamp when the jwt field has been changed
-DEFINE EVENT token_updated ON user 
-    WHEN (($before.jwt != $after.jwt) && $event = "UPDATE") 
-    THEN 
-{
-    UPDATE ONLY $value SET updated_at = time::now();
-};
 
 // Defines the course independently of the session or subject id.
 DEFINE TABLE subject SCHEMAFULL;
@@ -111,13 +106,14 @@ DEFINE FUNCTION OVERWRITE fn::extra::check_lecture_name($name: string) {
 };
 
 // Used to extract the registered lectures and add it to the global dataset
-DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
-    let $impartus_jwt = fn::get_token($user);
+DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>, $base_url: option<string>) {
+    let $impartus_jwt = fn::get_token($user, $base_url);
     IF type::is::none($impartus_jwt) {
         THROW "can't get user's impartus jwt";
     };
 
-    let $lectures = http::get("https://bitshyd.impartus.com/api/subjects", {
+    let $endpoint = string::concat($base_url OR "https://bitshyd.impartus.com/api", "/subjects");
+    let $lectures = http::get($endpoint, {
         "Authorization": string::concat("Bearer ", $impartus_jwt),
         "user-agent": "axios"
     });
@@ -170,13 +166,14 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>) {
 };
 
 // Used to pin the registered subjects of the latest session 
-DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>) {
-    let $impartus_jwt = fn::get_token($user);
+DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>, $base_url: option<string>) {
+    let $impartus_jwt = fn::get_token($user, $base_url);
     IF type::is::none($impartus_jwt) {
         THROW "can't get user's impartus jwt";
     };
     
-    let $lectures = http::get("https://bitshyd.impartus.com/api/subjects", {
+    let $endpoint = string::concat($base_url OR "https://bitshyd.impartus.com/api", "/subjects");
+    let $lectures = http::get($endpoint, {
         'Authorization': string::concat("Bearer ", $impartus_jwt)
     });
 

@@ -18,12 +18,13 @@ func getUserInfo(ctx *gin.Context) {
 		Valid      bool `json:"valid"`
 	}](
 		impartus.Repository.DB,
-		"RETURN {registered: record::exists($user), valid: type::is::string(fn::get_token($user))}",
+		"RETURN {registered: record::exists($user), valid: type::is::string(fn::get_token($user, $base_url))}",
 		map[string]interface{}{
 			"user": models.RecordID{
 				Table: "user",
 				ID:    claims.EMail,
 			},
+			"base_url": impartus.Client.BaseUrl,
 		},
 	)
 
@@ -91,8 +92,9 @@ func registerUser(ctx *gin.Context) {
 	}
 
 	// no of total lectures the user is registered to
-	lectures, err := surrealdb.Query[int](impartus.Repository.DB, "fn::extract_lectures($user)", map[string]interface{}{
-		"user": (*user.ID),
+	lectures, err := surrealdb.Query[int](impartus.Repository.DB, "fn::extract_lectures($user, $base_url)", map[string]interface{}{
+		"user":     (*user.ID),
+		"base_url": impartus.Client.BaseUrl,
 	})
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -103,8 +105,9 @@ func registerUser(ctx *gin.Context) {
 	}
 
 	// no of pinned subjects of the user
-	pinned, err := surrealdb.Query[int](impartus.Repository.DB, "fn::pin_registered($user)", map[string]interface{}{
-		"user": (*user.ID),
+	pinned, err := surrealdb.Query[int](impartus.Repository.DB, "fn::pin_registered($user, $base_url)", map[string]interface{}{
+		"user":     (*user.ID),
+		"base_url": impartus.Client.BaseUrl,
 	})
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
