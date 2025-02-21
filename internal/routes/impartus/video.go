@@ -194,6 +194,44 @@ func getIndexM3U8(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 }
 
+func getM3U8ChunkInfo(ctx *gin.Context) {
+	ttid := ctx.Param("ttid")
+	token := impartus.GetImpartusJwtForUser(ctx)
+
+	data, err := impartus.Client.GetIndexM3U8(token, ttid)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    "get-index-m3u8",
+			"cause":   "impartus",
+		})
+		return
+	}
+	indexM3U8 := string(data)
+	tracks := m3u8Regex.FindAllStringSubmatch(indexM3U8, -1)
+
+	// get data from the first track
+	data, err = impartus.Client.GetM3U8Chunk(token, tracks[0][1])
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+			"code":    "get-m3u8-chunk",
+			"cause":   "impartus",
+		})
+		return
+	}
+
+	hasRightView := bytes.Contains(data, []byte("#EXT-X-DISCONTINUITY"))
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"tracks": tracks,
+		"views": gin.H{
+			"left":  true,
+			"right": hasRightView,
+		},
+	})
+}
+
 var cipherUriRegex = regexp.MustCompile(`URI=".*ttid=(\d*)&.*"`)
 
 // Replace decryption key URI in the chunk with the server implementation
@@ -221,42 +259,6 @@ func getM3U8Chunk(ctx *gin.Context) {
 
 	data = transformChunk(hostUrl, data)
 	ctx.Data(http.StatusOK, "application/x-mpegurl", data)
-}
-
-func getM3U8ChunkInfo(ctx *gin.Context) {
-	ttid := ctx.Param("ttid")
-	token := impartus.GetImpartusJwtForUser(ctx)
-
-	data, err := impartus.Client.GetIndexM3U8(token, ttid)
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-			"code":    "get-index-m3u8",
-			"cause":   "impartus",
-		})
-		return
-	}
-
-	m3u8 := string(m3u8Regex.FindSubmatch(data)[1])
-
-	data, err = impartus.Client.GetM3U8Chunk(token, m3u8)
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": err.Error(),
-			"code":    "get-m3u8-chunk",
-			"cause":   "impartus",
-		})
-		return
-	}
-
-	hasRightView := bytes.Contains(data, []byte("#EXT-X-DISCONTINUITY"))
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"views": gin.H{
-			"left":  true,
-			"right": hasRightView,
-		},
-	})
 }
 
 // Returns the left view of the video
@@ -307,11 +309,14 @@ func RegisterVideoRoutes(r *gin.RouterGroup) {
 
 	authorized.GET("/video/:videoId/info", getVideoInfo)
 	authorized.GET("/ttid/:ttid/info", getTTIDInfo)
+
 	authorized.GET("/ttid/:ttid/slides", getSlides)
 	authorized.GET("/ttid/:ttid/slides/download", downloadSlides)
+
 	authorized.GET("/ttid/:ttid/key", getTTIDdecryptionKey)
 	authorized.GET("/ttid/:ttid/m3u8", getIndexM3U8)
 	authorized.GET("/ttid/:ttid/m3u8/info", getM3U8ChunkInfo)
+
 	authorized.GET("/chunk/m3u8", getM3U8Chunk)
 	authorized.GET("/chunk/m3u8/left", getLeftView)
 	authorized.GET("/chunk/m3u8/right", getRightView)
