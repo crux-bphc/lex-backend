@@ -194,6 +194,8 @@ func getIndexM3U8(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "application/x-mpegurl", data)
 }
 
+var videoDimensionsRegex = regexp.MustCompile(`(\d*x\d*)`)
+
 func getM3U8ChunkInfo(ctx *gin.Context) {
 	ttid := ctx.Param("ttid")
 	token := impartus.GetImpartusJwtForUser(ctx)
@@ -210,6 +212,12 @@ func getM3U8ChunkInfo(ctx *gin.Context) {
 	indexM3U8 := string(data)
 	tracks := m3u8Regex.FindAllStringSubmatch(indexM3U8, -1)
 
+	tracksMap := map[string][]string{}
+	for _, track := range tracks {
+		dimension := videoDimensionsRegex.FindStringSubmatch(track[1])[0]
+		tracksMap[dimension] = track
+	}
+
 	// get data from the first track
 	data, err = impartus.Client.GetM3U8Chunk(token, tracks[0][1])
 	if err != nil {
@@ -224,7 +232,7 @@ func getM3U8ChunkInfo(ctx *gin.Context) {
 	hasRightView := bytes.Contains(data, []byte("#EXT-X-DISCONTINUITY"))
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"tracks": tracks,
+		"tracks": tracksMap,
 		"views": gin.H{
 			"left":  true,
 			"right": hasRightView,
