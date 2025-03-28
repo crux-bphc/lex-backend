@@ -14,7 +14,7 @@ DEFINE TABLE user SCHEMAFULL;
 DEFINE FIELD email ON user TYPE string ASSERT string::is::email($value);
 DEFINE FIELD password ON user TYPE string;
 DEFINE FIELD jwt ON user TYPE option<string>;
-DEFINE FIELD updated_at ON user TYPE datetime VALUE time::now() READONLY;
+DEFINE FIELD updated_at ON user TYPE datetime VALUE time::now();
 
 DEFINE INDEX userEmailIndex ON TABLE user COLUMNS email UNIQUE;
 
@@ -197,5 +197,5 @@ DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>, $base_url: opt
     RETURN count(SELECT id FROM pinned WHERE in = $user);
 };
 
-DEFINE ANALYZER OVERWRITE subject_analyzer TOKENIZERS blank FILTERS ascii,lowercase,edgengram(2,10);
+DEFINE ANALYZER OVERWRITE subject_analyzer TOKENIZERS blank,class FILTERS ascii,lowercase,edgengram(2,10);
 DEFINE INDEX OVERWRITE subject_search ON subject FIELDS name,department,code SEARCH ANALYZER subject_analyzer BM25;
