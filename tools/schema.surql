@@ -120,6 +120,12 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>, $base_url: o
 
     FOR $lecture IN $lectures {
         let $impartus_session = type::int($lecture.sessionId);
+
+        IF $impartus_session <= 1426 {
+            // old sessions, videos no longer on impartus
+            CONTINUE;
+        };
+
         let $impartus_subject = type::int($lecture.subjectId);
 
         IF !fn::extra::check_lecture_name($lecture.subjectName) {
