@@ -25,7 +25,7 @@ DEFINE FUNCTION OVERWRITE fn::get_token($user: record<user>, $base_url: option<s
     };
 
     IF (time::now() - $user.updated_at > 6d) {
-        let $endpoint = string::concat($base_url OR "https://bitshyd.impartus.com/api", "/auth/signin");
+        let $endpoint = string::concat($base_url OR "http://172.16.3.20/api", "/auth/signin");
         UPDATE ONLY $user SET jwt = function($endpoint) {
             const [endpoint] = arguments;
             const response = await fetch(endpoint, {
@@ -112,7 +112,7 @@ DEFINE FUNCTION OVERWRITE fn::extract_lectures($user: record<user>, $base_url: o
         THROW "can't get user's impartus jwt";
     };
 
-    let $endpoint = string::concat($base_url OR "https://bitshyd.impartus.com/api", "/subjects");
+    let $endpoint = string::concat($base_url OR "http://172.16.3.20/api", "/subjects");
     let $lectures = http::get($endpoint, {
         "Authorization": string::concat("Bearer ", $impartus_jwt),
         "user-agent": "axios"
@@ -178,7 +178,7 @@ DEFINE FUNCTION OVERWRITE fn::pin_registered($user: record<user>, $base_url: opt
         THROW "can't get user's impartus jwt";
     };
     
-    let $endpoint = string::concat($base_url OR "https://bitshyd.impartus.com/api", "/subjects");
+    let $endpoint = string::concat($base_url OR "http://172.16.3.20/api", "/subjects");
     let $lectures = http::get($endpoint, {
         'Authorization': string::concat("Bearer ", $impartus_jwt)
     });
