@@ -48,8 +48,8 @@ func getBearerToken(ctx *gin.Context) (string, error) {
 // checks if the jwt token is obtained from the correct logto client
 func checkAudience(claims jwt.ClaimStrings) bool {
 	validAudiences := []string{
-		"k8fhucay2ilpaj2rtkrii", // Lex
-		"vcs78xneqspqqkt1oz7ml", // Multipartus Downloader
+		"n3h4pbp70440nj5h9ofph", // Lex
+		"yjmouftg5ba37lf70ooas", // Multipartus Downloader
 	}
 
 	for _, aud := range claims {
